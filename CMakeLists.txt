@@ -18,11 +18,20 @@ PKG_CHECK_MODULES(PORTAUDIO REQUIRED portaudio-2.0)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(glfw3 REQUIRED)
 
+# IMGUI
+SET(IMGUI_DIR ${CMAKE_SOURCE_DIR}/3rdparty/imgui)
+
 # SOURCE
 ADD_EXECUTABLE(loki_media_player
         src/main.cpp
         src/Decoder.cpp
         src/VideoRenderer.cpp
+        ${IMGUI_DIR}/imgui.cpp
+        ${IMGUI_DIR}/imgui_draw.cpp
+        ${IMGUI_DIR}/imgui_widgets.cpp
+        ${IMGUI_DIR}/imgui_tables.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
 # INCLUDE
@@ -34,6 +43,8 @@ TARGET_INCLUDE_DIRECTORIES(loki_media_player PRIVATE
         ${SWSCALE_INCLUDE_DIRS}
         ${SWRESAMPLE_INCLUDE_DIRS}
         ${PORTAUDIO_INCLUDE_DIRS}
+        ${IMGUI_DIR}
+        ${IMGUI_DIR}/backends
 )
 
 # LINK
