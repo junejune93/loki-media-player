@@ -99,7 +99,8 @@ loki-media-player/
 ---
 
 ## Scrrenshot
-![Scrrenshot](/assets/Screenshot1.png)
+![Scrrenshot1](/assets/Screenshot1.png)
+![Scrrenshot2](/assets/Screenshot2.png)
 
 ---
 
