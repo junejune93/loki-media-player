@@ -98,6 +98,11 @@ loki-media-player/
 
 ---
 
+## Scrrenshot
+![image1](/assets/Screenshot from 2025-08-18 23-46-48.png)
+
+---
+
 ## License
 This project is licensed under the MIT License. See the `LICENSE` file for details.
 
