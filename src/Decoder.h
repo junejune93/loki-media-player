@@ -27,6 +27,9 @@ public:
 
     void start();
     void stop();
+    void flush();
+    double getDuration() const;
+    bool seek(double timeInSeconds);
 
     ThreadSafeQueue<VideoFrame>& getVideoQueue() { return videoQueue; }
     ThreadSafeQueue<AudioFrame>& getAudioQueue() { return audioQueue; }
@@ -52,4 +55,6 @@ private:
 
     std::thread decodeThread;
     std::atomic<bool> running{false};
+    std::atomic<bool> seekRequested{false};
+    std::atomic<double> seekTarget{0.0};
 };

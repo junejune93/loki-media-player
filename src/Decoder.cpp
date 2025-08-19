@@ -96,6 +96,36 @@ void Decoder::stop() {
     if (decodeThread.joinable()) decodeThread.join();
 }
 
+double Decoder::getDuration() const {
+    if (!fmtCtx) {
+        return 0.0;
+    }
+
+    if (fmtCtx->duration != AV_NOPTS_VALUE) {
+        return static_cast<double>(fmtCtx->duration) / AV_TIME_BASE;
+    }
+
+    if (videoStreamIndex >= 0) {
+        AVStream* vs = fmtCtx->streams[videoStreamIndex];
+        if (vs->duration != AV_NOPTS_VALUE) {
+            return static_cast<double>(vs->duration) * av_q2d(vs->time_base);
+        }
+    }
+
+    return 0.0;
+}
+
+bool Decoder::seek(double timeInSeconds) {
+    if (!fmtCtx || !running) {
+        return false;
+    }
+
+    seekTarget = timeInSeconds;
+    seekRequested = true;
+
+    return true;
+}
+
 void Decoder::startDecoding() {
     AVPacket* packet = av_packet_alloc();
     AVFrame*  vfr    = av_frame_alloc();
@@ -108,6 +138,27 @@ void Decoder::startDecoding() {
     auto playbackStartTime = std::chrono::high_resolution_clock::now();
 
     while (running && av_read_frame(fmtCtx, packet) >= 0) {
+        // SEEK
+        if (seekRequested.load()) {
+            double seekTime = seekTarget.load();
+            int64_t seekTimestamp = static_cast<int64_t>(seekTime * AV_TIME_BASE);
+            if (av_seek_frame(fmtCtx, -1, seekTimestamp, AVSEEK_FLAG_BACKWARD) >= 0) {
+                if (videoCtx) {
+                    avcodec_flush_buffers(videoCtx);
+                }
+                if (audioCtx) {
+                    avcodec_flush_buffers(audioCtx);
+                }
+                firstAudioFrame = true;
+                audioStartPTS = 0.0;
+                playbackStartTime = std::chrono::high_resolution_clock::now();
+            }
+
+            seekRequested = false;
+            av_packet_unref(packet);
+            continue;
+        }
+
         while (running && (videoQueue.size() > MAX_QUEUE_SIZE || audioQueue.size() > MAX_QUEUE_SIZE))
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         if (!running) break;
@@ -180,4 +231,14 @@ void Decoder::startDecoding() {
     av_frame_free(&vfr);
     av_frame_free(&afr);
     av_packet_free(&packet);
+}
+
+void Decoder::flush() {
+    if (videoCtx) {
+        avcodec_flush_buffers(videoCtx);
+    }
+
+    if (audioCtx) {
+        avcodec_flush_buffers(audioCtx);
+    }
 }

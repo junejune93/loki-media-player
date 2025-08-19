@@ -13,7 +13,8 @@ public:
         : _firstVideoPts(-1.0),
           _firstAudioPts(-1.0),
           _dropCount(0),
-          _initialized(false) {
+          _initialized(false),
+          _paused(false) {
 
     }
 
@@ -30,7 +31,7 @@ public:
     }
 
     bool syncVideo(const VideoFrame &vf) {
-        if (!_initialized) {
+        if (!_initialized || _paused) {
             return true;
         }
 
@@ -65,10 +66,24 @@ public:
 
     bool isInitialized() const { return _initialized; }
 
+    void pause() noexcept { _paused = true; }
+    void resume() noexcept { _paused = false; }
+    bool isPaused() const noexcept { return _paused; }
+
+    void reset() {
+        _firstVideoPts = -1.0;
+        _firstAudioPts = -1.0;
+        _dropCount = 0;
+        _initialized = false;
+        _paused = false;
+        _audioClock.store(0.0);
+    }
+
 private:
     std::atomic<double> _audioClock{0.0};
     double _firstVideoPts;
     double _firstAudioPts;
     int _dropCount;
     bool _initialized;
+    bool _paused;
 };

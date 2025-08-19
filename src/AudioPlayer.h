@@ -65,6 +65,18 @@ public:
         return pts;
     }
 
+    void pause() noexcept {
+        if (_stream) {
+            Pa_StopStream(_stream);
+        }
+    }
+
+    void resume() noexcept {
+        if (_stream) {
+            Pa_StartStream(_stream);
+        }
+    }
+
 private:
     static int audioCallback(const void* /*inputBuffer*/,
                              void* outputBuffer,

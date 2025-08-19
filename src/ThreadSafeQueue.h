@@ -82,6 +82,11 @@ public:
         return true;
     }
 
+    void clear() {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _queue.clear();
+    }
+
 private:
     mutable std::deque<T> _queue;
     mutable std::mutex _mutex;
