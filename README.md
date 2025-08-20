@@ -58,23 +58,47 @@ sudo apt install libglfw3-dev libgl1-mesa-dev portaudio19-dev
 
 ## Project Structure
 ```
-loki-media-player/
+loki_media_player/
 ├── CMakeLists.txt              # CMake build configuration
-├── include/                    # Header files
-│   ├── AudioFrame.h            # Audio frame structure
-│   ├── VideoFrame.h            # Video frame structure
-│   ├── AudioPlayer.h           # PortAudio-based audio player
-│   ├── VideoRenderer.h         # OpenGL video renderer
-│   ├── Decoder.h               # FFmpeg decoder wrapper
-│   ├── SyncManager.h           # Audio/video synchronization
-│   └── ThreadSafeQueue.h       # Thread-safe queue template
 ├── src/                        # Source files
-│   ├── main.cpp                # Main application
-│   ├── Decoder.cpp             # FFmpeg decoder implementation
-│   └── VideoRenderer.cpp       # OpenGL rendering implementation
-├── assets/                     # Test media files
-│   └── tears_of_steel_1080p.mov
-└── README.md
+│   ├── core/                   # Core application logic
+│   │   ├── Application.cpp     # Main application class
+│   │   ├── Application.h       # Application header
+│   │   ├── MediaPlayer.cpp     # Media playback core logic
+│   │   ├── MediaPlayer.h       # MediaPlayer header
+│   │   ├── MediaState.h        # Playback state management
+│   │   ├── Utils.cpp           # Utility functions
+│   │   └── Utils.h             # Utility header
+│   ├── media/                  # Media processing
+│   │   ├── AudioFrame.h        # Audio frame structure
+│   │   ├── AudioPlayer.h       # Audio player interface
+│   │   ├── Decoder.cpp         # FFmpeg decoder implementation
+│   │   ├── Decoder.h           # FFmpeg decoder wrapper
+│   │   ├── SyncManager.h       # Audio/video synchronization
+│   │   ├── ThreadSafeQueue.h   # Thread-safe queue template
+│   │   ├── VideoFrame.h        # Video frame structure
+│   │   ├── VideoRenderer.cpp   # OpenGL video renderer implementation
+│   │   └── VideoRenderer.h     # OpenGL video renderer
+│   ├── rendering/              # OpenGL rendering system
+│   │   ├── RenderContext.cpp   # Rendering context implementation
+│   │   ├── RenderContext.h     # Rendering context
+│   │   ├── ShaderProgram.cpp   # Shader management implementation
+│   │   ├── ShaderProgram.h     # Shader program wrapper
+│   │   ├── VideoFBO.cpp        # Framebuffer object implementation
+│   │   └── VideoFBO.h          # Framebuffer object
+│   ├── threads/                # Multi-threading support
+│   │   ├── AudioThread.cpp     # Audio thread implementation
+│   │   └── AudioThread.h       # Audio thread management
+│   ├── ui/                     # User interface
+│   │   ├── ControlPanel.cpp    # Media control panel implementation
+│   │   ├── ControlPanel.h      # Control panel interface
+│   │   ├── FileSelector.cpp    # File selection dialog implementation
+│   │   ├── FileSelector.h      # File selector interface
+│   │   ├── UIManager.cpp       # UI management implementation
+│   │   └── UIManager.h         # UI manager
+│   ├── gl_common.h             # OpenGL common headers
+│   └── main.cpp                # Program entry point
+└── README.md                   # Project documentation
 ```
 
 ---
@@ -82,17 +106,19 @@ loki-media-player/
 ### Thread Architecture
 ```
 ┌─────────────┐    ┌──────────────┐    ┌─────────────┐
-│   Decoder   │───▶│ Video Queue  │───▶│   Video     │
+│    Main     │───▶│ Video Queue  │───▶│   Video     │
 │   Thread    │    │              │    │  Renderer   │
-│             │    ┌──────────────┐    │   Thread    │
-│             │───▶│ Audio Queue  │───▶│             │
+│ (MediaPlayer│    ┌──────────────┐    │ (Main Thread│
+│  + Decoder) │───▶│ Audio Queue  │    │   OpenGL)   │
 └─────────────┘    └──────────────┘    └─────────────┘
                            │
                            ▼
                    ┌─────────────┐
-                   │   Audio     │
-                   │   Player    │
+                   │             │
+                   │    Audio    │
                    │   Thread    │
+                   │(AudioThread)│
+                   │             │
                    └─────────────┘
 ```
 
