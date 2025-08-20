@@ -4,6 +4,9 @@
 #include <functional>
 #include "ControlPanel.h"
 #include "FileSelector.h"
+#include "OSDRenderer.h"
+#include "OSDState.h"
+#include "../core/MediaState.h"
 #include <GLFW/glfw3.h>
 
 class UIManager {
@@ -24,11 +27,23 @@ public:
 
     FileSelector *getFileSelector() { return _fileSelector.get(); }
 
+    // OSD
+    void updateOSDData(const MediaState& mediaState, const std::string& fileName);
+    void handleOSDInput(GLFWwindow* window);
+    void setOSDVisible(bool visible);
+    void setWindowSize(int width, int height);
+
 private:
     static void setupStyle();
 
     bool _initialized = false;
     std::unique_ptr<ControlPanel> _controlPanel;
     std::unique_ptr<FileSelector> _fileSelector;
+    std::unique_ptr<OSDRenderer> _osdRenderer;
     std::function<void(const std::string &)> _onFileSelected;
+
+    // OSD
+    OSDState _osdState;
+    int _windowWidth = 1280;
+    int _windowHeight = 780;
 };

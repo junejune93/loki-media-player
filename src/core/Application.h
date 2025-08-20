@@ -28,13 +28,16 @@ private:
 
     void setupUICallbacks();
 
-    static void handleEvents();
+    void handleEvents();
 
     void update();
 
     void render();
 
     void cleanup();
+
+    // OSD
+    void updateOSDData();
 
 private:
     GLFWwindow *_window = nullptr;
@@ -51,5 +54,5 @@ private:
 
     std::vector<std::string> _videoFiles;
     std::string _selectedFile;
-    bool _fileLoaded;
+    bool _fileLoaded = false;
 };

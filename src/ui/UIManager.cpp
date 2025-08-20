@@ -14,6 +14,8 @@ bool UIManager::initialize(GLFWwindow *window) {
         return true;
     }
 
+    _initialized = true;
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     setupStyle();
@@ -34,7 +36,7 @@ bool UIManager::initialize(GLFWwindow *window) {
         _fileSelector->setSelectCallback(_onFileSelected);
     }
 
-    _initialized = true;
+    _osdRenderer = std::make_unique<OSDRenderer>();
     return true;
 }
 
@@ -82,12 +84,52 @@ void UIManager::render() {
         return;
     }
 
+    // OSD 렌더링 (다른 UI 요소들보다 먼저)
+    if (_osdRenderer && _osdState.visible) {
+        _osdRenderer->render(_osdState, _windowWidth, _windowHeight);
+    }
+
     if (_fileSelector && _fileSelector->isVisible()) {
         _fileSelector->render();
     }
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void UIManager::updateOSDData(const MediaState& mediaState, const std::string& fileName) {
+    if (!_initialized) return;
+
+    _osdState.currentTime = mediaState.currentTime;
+    _osdState.totalDuration = mediaState.duration;
+    _osdState.isPlaying = mediaState.isPlaying;
+    _osdState.playbackSpeed = mediaState.playbackSpeed;
+    _osdState.volumeLevel = mediaState.volume;
+    _osdState.isBuffering = mediaState.isBuffering;
+
+    if (!fileName.empty()) {
+        _osdState.fileName = OSDState::extractFileName(fileName);
+    }
+
+    _osdState.syncStatus = (mediaState.audioVideoSyncOffset < 40) ? "Synced" : "Out of Sync";
+}
+
+void UIManager::handleOSDInput(GLFWwindow* window) {
+    if (_osdRenderer) {
+        _osdRenderer->handleInput(window, _osdState);
+    }
+}
+
+void UIManager::setOSDVisible(bool visible) {
+    _osdState.visible = visible;
+    if (visible) {
+        _osdState.updateInteraction();
+    }
+}
+
+void UIManager::setWindowSize(int width, int height) {
+    _windowWidth = width;
+    _windowHeight = height;
 }
 
 void UIManager::shutdown() {
@@ -97,6 +139,7 @@ void UIManager::shutdown() {
 
     _controlPanel.reset();
     _fileSelector.reset();
+    _osdRenderer.reset();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();

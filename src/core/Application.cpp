@@ -98,6 +98,9 @@ bool Application::initializeUI() {
         _fileLoaded = false;
     });
 
+    // OSD
+    _uiManager->setWindowSize(_windowWidth, _windowHeight);
+
     return true;
 }
 
@@ -118,6 +121,11 @@ void Application::run() {
 
 void Application::handleEvents() {
     glfwPollEvents();
+
+    // OSD
+    if (_uiManager) {
+        _uiManager->handleOSDInput(_window);
+    }
 }
 
 void Application::update() {
@@ -129,20 +137,38 @@ void Application::update() {
             _fileLoaded = true;
         }
     }
+
+    // OSD
+    if (_uiManager && _mediaPlayer) {
+        updateOSDData();
+    }
+}
+
+void Application::updateOSDData() {
+    const auto mediaState = _mediaPlayer->getState();
+
+    MediaState osdMediaState;
+    osdMediaState.currentTime = mediaState.currentTime;
+    osdMediaState.duration = mediaState.duration;
+    osdMediaState.isPlaying = mediaState.isPlaying;
+    osdMediaState.playbackSpeed = mediaState.playbackSpeed;
+    osdMediaState.volume = mediaState.volume;
+    osdMediaState.isBuffering = mediaState.isBuffering;
+    osdMediaState.audioVideoSyncOffset = mediaState.audioVideoSyncOffset;
+
+    _uiManager->updateOSDData(osdMediaState, _selectedFile);
 }
 
 void Application::render() {
-    // Start new ImGui frame
     _uiManager->newFrame();
 
-    // Clear screen
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Render video
+    // Render - video
     _mediaPlayer->render(_windowWidth, _windowHeight, CONTROLS_HEIGHT);
 
-    // Render UI controls
+    // Render - UI
     _controlPanel->render(_mediaPlayer->getState());
 
     // File menu
@@ -155,7 +181,7 @@ void Application::render() {
     ImGui::Text("Selected: %s", _selectedFile.empty() ? "None" : _selectedFile.c_str());
     ImGui::End();
 
-    // Render FileSelector and other UI
+    // OSD
     if (_uiManager) {
         _uiManager->render();
     }

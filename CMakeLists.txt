@@ -31,6 +31,7 @@ ADD_EXECUTABLE(loki_media_player
         src/ui/ControlPanel.cpp
         src/ui/FileSelector.cpp
         src/ui/UIManager.cpp
+        src/ui/OSDRenderer.cpp
         src/rendering/ShaderProgram.cpp
         src/rendering/RenderContext.cpp
         src/rendering/VideoFBO.cpp
