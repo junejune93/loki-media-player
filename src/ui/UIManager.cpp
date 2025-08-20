@@ -86,6 +86,7 @@ void UIManager::render() {
 
     // OSD 렌더링 (다른 UI 요소들보다 먼저)
     if (_osdRenderer && _osdState.visible) {
+        _osdState.updateVolumeFromSystem();
         _osdRenderer->render(_osdState, _windowWidth, _windowHeight);
     }
 
