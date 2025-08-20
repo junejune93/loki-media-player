@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../gl_common.h"
 #include <GLFW/glfw3.h>
-#include <GL/gl.h>
 #include <stdexcept>
 #include "VideoFrame.h"
 
@@ -19,8 +19,8 @@ public:
     void renderFrame(const VideoFrame& frame);
 
 private:
-    GLFWwindow* window{nullptr};
-    GLuint texture{0};
-    int width{0};
-    int height{0};
+    GLFWwindow* _window{nullptr};
+    GLuint _texture{0};
+    int _width{0};
+    int _height{0};
 };

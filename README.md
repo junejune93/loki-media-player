@@ -28,7 +28,7 @@
 - Requires CMake 3.14 or later
 - Requires C++17 or later compiler
 - [FFmpeg](https://ffmpeg.org/) development libraries
-- [GLFW3](https://www.glfw.org/) for window management
+- [GLFW3](https://www.glfw.org/) for _window management
 - [PortAudio](http://www.portaudio.com/) for cross-platform audio
 - [OpenGL](https://www.opengl.org/) for hardware-accelerated rendering
 

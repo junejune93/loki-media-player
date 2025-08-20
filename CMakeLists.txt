@@ -25,14 +25,23 @@ SET(IMGUI_DIR ${CMAKE_SOURCE_DIR}/3rdparty/imgui)
 # SOURCE
 ADD_EXECUTABLE(loki_media_player
         src/main.cpp
-        src/Decoder.cpp
-        src/VideoRenderer.cpp
+        src/core/Application.cpp
+        src/core/Utils.cpp
+        src/core/MediaPlayer.cpp
+        src/ui/ControlPanel.cpp
+        src/ui/FileSelector.cpp
+        src/rendering/ShaderProgram.cpp
+        src/rendering/VideoFBO.cpp
+        src/threads/AudioThread.cpp
+        src/media/Decoder.cpp
+        src/media/VideoRenderer.cpp
         ${IMGUI_DIR}/imgui.cpp
         ${IMGUI_DIR}/imgui_draw.cpp
         ${IMGUI_DIR}/imgui_widgets.cpp
         ${IMGUI_DIR}/imgui_tables.cpp
         ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
         ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+        src/ui/UIManager.cpp
 )
 
 # INCLUDE
