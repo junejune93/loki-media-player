@@ -20,6 +20,8 @@ private:
 
     static void renderStatusInfo(const OSDState &state, int windowWidth);
 
+    static void renderCodecInfo(const OSDState &state, int windowWidth, int windowHeight);
+
     void renderCenterStatus(const OSDState &state, int windowWidth, int windowHeight);
 
     static void setupOSDStyle(float alpha);
@@ -29,6 +31,7 @@ private:
     bool _oKeyPressed = false;      // Key: O (OSD Toggle)
     bool _iKeyPressed = false;      // Key: I (Play Info Toggle)
     bool _sKeyPressed = false;      // Key: S (Play State Toggle)
+    bool _cKeyPressed = false;      // Key: C (Codec Info Toggle)
 
     double _lastMouseX = 0.0;
     double _lastMouseY = 0.0;

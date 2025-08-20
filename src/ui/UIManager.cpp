@@ -98,7 +98,7 @@ void UIManager::render() {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void UIManager::updateOSDData(const MediaState& mediaState, const std::string& fileName) {
+void UIManager::updateOSDData(const MediaState &mediaState, const CodecInfo &codecInfo, const std::string &fileName) {
     if (!_initialized) return;
 
     _osdState.currentTime = mediaState.currentTime;
@@ -112,10 +112,12 @@ void UIManager::updateOSDData(const MediaState& mediaState, const std::string& f
         _osdState.fileName = OSDState::extractFileName(fileName);
     }
 
+    _osdState.codecInfo = codecInfo;
+
     _osdState.syncStatus = (mediaState.audioVideoSyncOffset < 40) ? "Synced" : "Out of Sync";
 }
 
-void UIManager::handleOSDInput(GLFWwindow* window) {
+void UIManager::handleOSDInput(GLFWwindow *window) {
     if (_osdRenderer) {
         _osdRenderer->handleInput(window, _osdState);
     }

@@ -7,12 +7,16 @@
 #include <memory>
 #include <stdexcept>
 #include <array>
+#include <sstream>
+#include <iomanip>
+#include "../media/CodecInfo.h"
 
 struct OSDState {
     // OSD - Control
     bool visible = true;
     bool showPlaybackInfo = true;
     bool showStatusInfo = true;
+    bool showCodecInfo = true;
     float fadeAlpha = 1.0f;
 
     // OSD - Playing Info
@@ -26,6 +30,9 @@ struct OSDState {
     bool isPlaying = false;
     bool isBuffering = false;
     std::string syncStatus = "Synced";
+
+    // OSD - Codec Info
+    CodecInfo codecInfo;
 
     // Interaction
     std::chrono::steady_clock::time_point lastInteraction;
@@ -52,6 +59,10 @@ struct OSDState {
         if (newVolume >= 0.0f) {
             volumeLevel = newVolume;
         }
+    }
+
+    void updateCodecInfo(const CodecInfo &newCodecInfo) {
+        codecInfo = newCodecInfo;
     }
 
     static std::string formatTime(double seconds) {
@@ -98,7 +109,7 @@ private:
                 std::string percentStr = result.substr(start, percentPos - start);
 
                 std::string cleanPercent;
-                for (char c : percentStr) {
+                for (char c: percentStr) {
                     if (std::isdigit(c)) {
                         cleanPercent += c;
                     }
@@ -108,7 +119,7 @@ private:
                     return std::stof(cleanPercent) / 100.0f;
                 }
             }
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
         }
         return -1.0f;
     }
@@ -124,7 +135,7 @@ private:
                 std::string percentStr = result.substr(start + 1, end - start - 1);
                 return std::stof(percentStr) / 100.0f;
             }
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
         }
         return -1.0f;
     }
@@ -143,7 +154,7 @@ private:
         return volume;
     }
 
-    static std::string executeCommand(const std::string& command) {
+    static std::string executeCommand(const std::string &command) {
         std::array<char, 128> buffer{};
         std::string result;
 

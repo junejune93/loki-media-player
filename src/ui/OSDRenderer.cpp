@@ -23,6 +23,10 @@ void OSDRenderer::render(const OSDState &state, int windowWidth, int windowHeigh
         renderStatusInfo(state, windowWidth);
     }
 
+    if (state.showCodecInfo && !state.codecInfo.isEmpty()) {
+        renderCodecInfo(state, windowWidth, windowHeight);
+    }
+
     renderCenterStatus(state, windowWidth, windowHeight);
 
     restoreOSDStyle();
@@ -33,6 +37,7 @@ void OSDRenderer::handleInput(GLFWwindow *window, OSDState &state) {
     bool oKeyDown = glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS;
     bool iKeyDown = glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS;
     bool sKeyDown = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
+    bool cKeyDown = glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
 
     // key: O
     if (oKeyDown && !_oKeyPressed) {
@@ -54,6 +59,13 @@ void OSDRenderer::handleInput(GLFWwindow *window, OSDState &state) {
         state.updateInteraction();
     }
     _sKeyPressed = sKeyDown;
+
+    // key: C
+    if (cKeyDown && !_cKeyPressed) {
+        state.showCodecInfo = !state.showCodecInfo;
+        state.updateInteraction();
+    }
+    _cKeyPressed = cKeyDown;
 
     // mouse
     double mouseX, mouseY;
@@ -109,6 +121,53 @@ void OSDRenderer::renderStatusInfo(const OSDState &state, int windowWidth) {
 
     const char *syncIcon = (state.syncStatus == "Synced") ? "[SYNC]" : "[WARN]";
     ImGui::Text("%s %s", syncIcon, state.syncStatus.c_str());
+
+    ImGui::End();
+}
+
+void OSDRenderer::renderCodecInfo(const OSDState &state, int windowWidth, int windowHeight) {
+    ImGui::SetNextWindowPos(ImVec2((float) windowWidth - 200, 100));
+    ImGui::Begin("##CodecInfo", nullptr,
+                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize |
+                 ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
+                 ImGuiWindowFlags_NoNav);
+
+    const auto &codec = state.codecInfo;
+
+    if (!codec.containerFormat.empty()) {
+        ImGui::Text("[FORMAT] %s", codec.containerFormat.c_str());
+    }
+
+    // video
+    if (codec.hasVideo) {
+        if (!codec.videoCodec.empty()) {
+            ImGui::Text("[VIDEO] %s", codec.videoCodec.c_str());
+        }
+        if (!codec.videoResolution.empty()) {
+            ImGui::Text("[RES] %s", codec.videoResolution.c_str());
+        }
+        if (!codec.videoBitrate.empty()) {
+            ImGui::Text("[V-BITRATE] %s", codec.videoBitrate.c_str());
+        }
+    }
+
+    // audio
+    if (codec.hasAudio) {
+        if (!codec.audioCodec.empty()) {
+            ImGui::Text("[AUDIO] %s", codec.audioCodec.c_str());
+        }
+        if (!codec.audioSampleRate.empty()) {
+            ImGui::Text("[SAMPLE] %s", codec.audioSampleRate.c_str());
+        }
+        if (!codec.audioBitrate.empty()) {
+            ImGui::Text("[A-BITRATE] %s", codec.audioBitrate.c_str());
+        }
+        if (!codec.audioChannels.empty()) {
+            ImGui::Text("[CHANNELS] %s", codec.audioChannels.c_str());
+        }
+    }
 
     ImGui::End();
 }

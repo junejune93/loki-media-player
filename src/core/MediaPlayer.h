@@ -44,6 +44,14 @@ public:
 
     MediaState &getState() { return _state; }
 
+    double getDuration() {
+        return _decoder != nullptr ? _decoder->getDuration() : 0.0;
+    }
+
+    CodecInfo getCodecInfo() {
+        return _decoder != nullptr ? _decoder->getCodecInfo() : CodecInfo{};
+    }
+
 private:
     void initializeQueues();
 

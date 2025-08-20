@@ -73,6 +73,8 @@ Decoder::Decoder(std::string file) : filename(std::move(file)) {
         if (swr_init(_swrCtx) < 0)
             throw std::runtime_error("Failed to init swr");
     }
+
+    initializeCodecInfo();
 }
 
 Decoder::~Decoder() {
@@ -85,16 +87,125 @@ Decoder::~Decoder() {
     avformat_network_deinit();
 }
 
+void Decoder::initializeCodecInfo() {
+    _codecInfo.clear();
+
+    if (!_fmtCtx) return;
+
+    if (_fmtCtx->iformat && _fmtCtx->iformat->name) {
+        _codecInfo.containerFormat = std::string(_fmtCtx->iformat->name);
+        if (_codecInfo.containerFormat == "mov,mp4,m4a,3gp,3g2,mj2") {
+            _codecInfo.containerFormat = "MP4";
+        } else if (_codecInfo.containerFormat == "matroska,webm") {
+            _codecInfo.containerFormat = "MKV/WebM";
+        } else if (_codecInfo.containerFormat == "avi") {
+            _codecInfo.containerFormat = "AVI";
+        }
+    }
+
+    // video
+    if (_videoStreamIndex >= 0 && _videoCtx) {
+        _codecInfo.hasVideo = true;
+        AVStream *vs = _fmtCtx->streams[_videoStreamIndex];
+
+        if (_videoCtx->codec && _videoCtx->codec->name) {
+            _codecInfo.videoCodec = std::string(_videoCtx->codec->name);
+            if (_codecInfo.videoCodec == "h264") {
+                _codecInfo.videoCodec = "H.264/AVC";
+            } else if (_codecInfo.videoCodec == "hevc") {
+                _codecInfo.videoCodec = "H.265/HEVC";
+            } else if (_codecInfo.videoCodec == "vp9") {
+                _codecInfo.videoCodec = "VP9";
+            } else if (_codecInfo.videoCodec == "vp8") {
+                _codecInfo.videoCodec = "VP8";
+            } else if (_codecInfo.videoCodec == "av1") {
+                _codecInfo.videoCodec = "AV1";
+            } else {
+                _codecInfo.videoCodec = "UNKNOWN";
+            }
+        }
+
+        // resolution
+        if (_videoCtx->width > 0 && _videoCtx->height > 0) {
+            _codecInfo.videoResolution = std::to_string(_videoCtx->width) + "x" + std::to_string(_videoCtx->height);
+        }
+
+        // bitrate
+        if (vs->codecpar->bit_rate > 0) {
+            _codecInfo.videoBitrate = CodecInfo::formatBitrate(vs->codecpar->bit_rate);
+        } else if (_fmtCtx->bit_rate > 0) {
+            _codecInfo.videoBitrate = CodecInfo::formatBitrate(_fmtCtx->bit_rate * 0.8);
+        }
+    }
+
+    // audio
+    if (_audioStreamIndex >= 0 && _audioCtx) {
+        _codecInfo.hasAudio = true;
+        AVStream *as = _fmtCtx->streams[_audioStreamIndex];
+
+        if (_audioCtx->codec && _audioCtx->codec->name) {
+            _codecInfo.audioCodec = std::string(_audioCtx->codec->name);
+            if (_codecInfo.audioCodec == "aac") {
+                _codecInfo.audioCodec = "AAC";
+            } else if (_codecInfo.audioCodec == "mp3") {
+                _codecInfo.audioCodec = "MP3";
+            } else if (_codecInfo.audioCodec == "ac3") {
+                _codecInfo.audioCodec = "AC-3";
+            } else if (_codecInfo.audioCodec == "eac3") {
+                _codecInfo.audioCodec = "E-AC-3";
+            } else if (_codecInfo.audioCodec == "dts") {
+                _codecInfo.audioCodec = "DTS";
+            } else if (_codecInfo.audioCodec == "opus") {
+                _codecInfo.audioCodec = "Opus";
+            } else if (_codecInfo.audioCodec == "vorbis") {
+                _codecInfo.audioCodec = "Vorbis";
+            } else {
+                _codecInfo.audioCodec = "UNKNOWN";
+            }
+        }
+
+        // samplerate
+        if (_audioCtx->sample_rate > 0) {
+            _codecInfo.audioSampleRate = CodecInfo::formatSampleRate(_audioCtx->sample_rate);
+        }
+
+        // bitrate
+        if (as->codecpar->bit_rate > 0) {
+            _codecInfo.audioBitrate = CodecInfo::formatBitrate(as->codecpar->bit_rate);
+        }
+
+        if (_audioCtx->channels > 0) {
+            uint64_t ch_layout = as->codecpar->channel_layout;
+            if (ch_layout == 0) {
+                ch_layout = av_get_default_channel_layout(_audioCtx->channels);
+            }
+            _codecInfo.audioChannels = CodecInfo::formatChannelLayout(_audioCtx->channels, ch_layout);
+        }
+    }
+}
+
+CodecInfo Decoder::getCodecInfo() const {
+    return _codecInfo;
+}
+
 void Decoder::start() {
-    if (_decodeRunning) return;
+    if (_decodeRunning) {
+        return;
+    }
     _decodeRunning = true;
     _decodeThread = std::thread(&Decoder::startDecoding, this);
 }
 
 void Decoder::stop() {
-    if (!_decodeRunning) return;
+    if (!_decodeRunning) {
+        return;
+    }
+
     _decodeRunning = false;
-    if (_decodeThread.joinable()) _decodeThread.join();
+
+    if (_decodeThread.joinable()) {
+        _decodeThread.join();
+    }
 }
 
 double Decoder::getDuration() const {

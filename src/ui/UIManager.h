@@ -28,9 +28,12 @@ public:
     FileSelector *getFileSelector() { return _fileSelector.get(); }
 
     // OSD
-    void updateOSDData(const MediaState& mediaState, const std::string& fileName);
-    void handleOSDInput(GLFWwindow* window);
+    void updateOSDData(const MediaState &mediaState, const CodecInfo &codecState, const std::string &fileName);
+
+    void handleOSDInput(GLFWwindow *window);
+
     void setOSDVisible(bool visible);
+
     void setWindowSize(int width, int height);
 
 private:

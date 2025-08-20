@@ -6,6 +6,7 @@
 #include "ThreadSafeQueue.h"
 #include "VideoFrame.h"
 #include "AudioFrame.h"
+#include "ui/OSDState.h"
 
 struct VideoFrame;
 struct AudioFrame;
@@ -40,8 +41,12 @@ public:
 
     ThreadSafeQueue<AudioFrame> &getAudioQueue() { return _audioQueue; }
 
+    CodecInfo getCodecInfo() const;
+
 private:
     void startDecoding();
+
+    void initializeCodecInfo();
 
     std::string filename;
 
@@ -63,4 +68,6 @@ private:
     std::atomic<bool> _decodeRunning{false};
     std::atomic<bool> _seekRequested{false};
     std::atomic<double> _seekTarget{0.0};
+
+    CodecInfo _codecInfo;
 };

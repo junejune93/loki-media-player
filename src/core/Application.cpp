@@ -145,6 +145,10 @@ void Application::update() {
 }
 
 void Application::updateOSDData() {
+    if (!_mediaPlayer) {
+        return;
+    }
+
     const auto mediaState = _mediaPlayer->getState();
 
     MediaState osdMediaState;
@@ -156,7 +160,11 @@ void Application::updateOSDData() {
     osdMediaState.isBuffering = mediaState.isBuffering;
     osdMediaState.audioVideoSyncOffset = mediaState.audioVideoSyncOffset;
 
-    _uiManager->updateOSDData(osdMediaState, _selectedFile);
+    const auto duration = _mediaPlayer->getDuration();
+    osdMediaState.totalDuration = duration;
+
+    const auto codecInfo = _mediaPlayer->getCodecInfo();
+    _uiManager->updateOSDData(osdMediaState, codecInfo, _selectedFile);
 }
 
 void Application::render() {
