@@ -5,20 +5,25 @@
 
 class RenderContext {
 public:
-    explicit RenderContext(GLFWwindow* window);
+    explicit RenderContext(GLFWwindow *window);
+
     ~RenderContext() = default;
 
     bool initialize();
+
     void makeCurrent();
+
     void swapBuffers();
 
     void setViewport(int x, int y, int width, int height);
+
     void clearColor(float r, float g, float b, float a = 1.0f);
+
     void clear(GLbitfield mask = GL_COLOR_BUFFER_BIT);
 
-    GLFWwindow* getWindow() const { return _renderWindow; }
+    GLFWwindow *getWindow() const { return _renderWindow; }
 
 private:
-    GLFWwindow* _renderWindow;
+    GLFWwindow *_renderWindow;
     bool _initialized = false;
 };

@@ -63,9 +63,9 @@ bool Application::initializeWindow() {
         return false;
     }
 
-    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+    GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
     if (primaryMonitor) {
-        const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+        const GLFWvidmode *mode = glfwGetVideoMode(primaryMonitor);
         if (mode) {
             int xpos = (mode->width - _windowWidth) / 2;
             int ypos = (mode->height - _windowHeight) / 2;
@@ -93,7 +93,7 @@ bool Application::initializeUI() {
         return false;
     }
 
-    _uiManager->setOnFileSelected([this](const std::string& file){
+    _uiManager->setOnFileSelected([this](const std::string &file) {
         _selectedFile = file;
         _fileLoaded = false;
     });

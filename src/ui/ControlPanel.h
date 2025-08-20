@@ -9,17 +9,22 @@ class ControlPanel {
 public:
     ControlPanel(int videoWidth, int controlsHeight);
 
-    void render(MediaState& state);
+    void render(MediaState &state);
 
     void setPlayCallback(std::function<void()> cb) { _onPlay = std::move(cb); }
+
     void setPauseCallback(std::function<void()> cb) { _onPause = std::move(cb); }
+
     void setStopCallback(std::function<void()> cb) { _onStop = std::move(cb); }
+
     void setSeekCallback(std::function<void(double)> cb) { _onSeek = std::move(cb); }
 
 private:
-    void renderProgressBar(MediaState& state);
-    void renderControlButtons(const MediaState& state);
-    static void renderTimeDisplay(const MediaState& state);
+    void renderProgressBar(MediaState &state);
+
+    void renderControlButtons(const MediaState &state);
+
+    static void renderTimeDisplay(const MediaState &state);
 
     int _videoWidth;
     int _controlsHeight;

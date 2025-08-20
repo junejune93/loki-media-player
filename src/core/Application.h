@@ -12,23 +12,32 @@
 class Application {
 public:
     Application();
+
     ~Application();
 
     bool initialize();
+
     void run();
 
 private:
     bool initializeWindow();
+
     static bool initializeOpenGL();
+
     bool initializeUI();
+
     void setupUICallbacks();
+
     static void handleEvents();
+
     void update();
+
     void render();
+
     void cleanup();
 
 private:
-    GLFWwindow* _window = nullptr;
+    GLFWwindow *_window = nullptr;
     std::unique_ptr<MediaPlayer> _mediaPlayer;
     std::unique_ptr<ControlPanel> _controlPanel;
     std::unique_ptr<UIManager> _uiManager;

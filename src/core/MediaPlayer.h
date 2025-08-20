@@ -19,27 +19,36 @@
 class MediaPlayer {
 public:
     MediaPlayer();
+
     ~MediaPlayer();
 
-    bool initialize(GLFWwindow* window, int videoWidth, int videoHeight);
-    bool loadFile(const std::string& filename);
+    bool initialize(GLFWwindow *window, int videoWidth, int videoHeight);
+
+    bool loadFile(const std::string &filename);
 
     void play();
+
     void pause();
+
     void stop();
+
     void seek(double time);
 
     // 비디오 프레임 업데이트
     void update();
+
     // 비디오 렌더링
     void render(int windowWidth, int windowHeight, int controlsHeight);
 
-    const MediaState& getState() const { return _state; }
-    MediaState& getState() { return _state; }
+    const MediaState &getState() const { return _state; }
+
+    MediaState &getState() { return _state; }
 
 private:
     void initializeQueues();
+
     void swapFrameBuffers();
+
     bool initializeShaders();
 
     std::unique_ptr<Decoder> _decoder;

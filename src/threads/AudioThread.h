@@ -13,16 +13,20 @@ struct VideoFrame;
 
 class AudioThread {
 public:
-    AudioThread(ThreadSafeQueue<AudioFrame>& audioQueue,
-                ThreadSafeQueue<VideoFrame>& videoQueue,
-                AudioPlayer& audioPlayer,
-                SyncManager& syncManager,
-                Decoder& decoder);
+    AudioThread(ThreadSafeQueue<AudioFrame> &audioQueue,
+                ThreadSafeQueue<VideoFrame> &videoQueue,
+                AudioPlayer &audioPlayer,
+                SyncManager &syncManager,
+                Decoder &decoder);
+
     ~AudioThread();
 
     void start();
+
     void stop();
+
     void setPlaying(bool playing) { _playing = playing; }
+
     void requestSeek(double time);
 
     double getCurrentTime() const { return _currentTime; }
@@ -37,9 +41,9 @@ private:
     std::atomic<double> _seekTarget{0.0};
     std::atomic<double> _currentTime{0.0};
 
-    ThreadSafeQueue<AudioFrame>& _audioQueue;
-    ThreadSafeQueue<VideoFrame>& _videoQueue;
-    AudioPlayer& _audioPlayer;
-    SyncManager& _syncManager;
-    Decoder& _decoder;
+    ThreadSafeQueue<AudioFrame> &_audioQueue;
+    ThreadSafeQueue<VideoFrame> &_videoQueue;
+    AudioPlayer &_audioPlayer;
+    SyncManager &_syncManager;
+    Decoder &_decoder;
 };

@@ -1,10 +1,10 @@
 #include "VideoRenderer.h"
 #include <stdexcept>
 
-VideoRenderer::VideoRenderer(GLFWwindow* win, int w, int h)
-    : _window(win),
-      _width(w),
-      _height(h) {
+VideoRenderer::VideoRenderer(GLFWwindow *win, int w, int h)
+        : _window(win),
+          _width(w),
+          _height(h) {
     if (!_window) {
         throw std::invalid_argument("GLFWwindow pointer is null");
     }
@@ -31,16 +31,16 @@ VideoRenderer::~VideoRenderer() {
     }
 }
 
-VideoRenderer::VideoRenderer(VideoRenderer&& other) noexcept
-    : _window(other._window),
-      _texture(other._texture),
-      _width(other._width),
-      _height(other._height) {
+VideoRenderer::VideoRenderer(VideoRenderer &&other) noexcept
+        : _window(other._window),
+          _texture(other._texture),
+          _width(other._width),
+          _height(other._height) {
     other._texture = 0;
     other._window = nullptr;
 }
 
-VideoRenderer& VideoRenderer::operator=(VideoRenderer&& other) noexcept {
+VideoRenderer &VideoRenderer::operator=(VideoRenderer &&other) noexcept {
     if (this != &other) {
         if (_texture != 0) {
             glDeleteTextures(1, &_texture);
@@ -57,7 +57,7 @@ VideoRenderer& VideoRenderer::operator=(VideoRenderer&& other) noexcept {
     return *this;
 }
 
-void VideoRenderer::renderFrame(const VideoFrame& frame) {
+void VideoRenderer::renderFrame(const VideoFrame &frame) {
     if (frame.data.empty()) {
         return;
     }
@@ -70,10 +70,14 @@ void VideoRenderer::renderFrame(const VideoFrame& frame) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glBegin(GL_QUADS);
-        glTexCoord2f(0.f, 1.f); glVertex2f(-1.f, -1.f);
-        glTexCoord2f(1.f, 1.f); glVertex2f( 1.f, -1.f);
-        glTexCoord2f(1.f, 0.f); glVertex2f( 1.f,  1.f);
-        glTexCoord2f(0.f, 0.f); glVertex2f(-1.f,  1.f);
+    glTexCoord2f(0.f, 1.f);
+    glVertex2f(-1.f, -1.f);
+    glTexCoord2f(1.f, 1.f);
+    glVertex2f(1.f, -1.f);
+    glTexCoord2f(1.f, 0.f);
+    glVertex2f(1.f, 1.f);
+    glTexCoord2f(0.f, 0.f);
+    glVertex2f(-1.f, 1.f);
     glEnd();
 
     glfwSwapBuffers(_window);

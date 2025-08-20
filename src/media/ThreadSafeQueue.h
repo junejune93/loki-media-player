@@ -6,11 +6,11 @@
 #include <condition_variable>
 #include <stdexcept>
 
-template <typename T>
+template<typename T>
 class ThreadSafeQueue {
 public:
     explicit ThreadSafeQueue(size_t maxSize = 100)
-        : _maxSize(maxSize) {
+            : _maxSize(maxSize) {
 
     }
 
@@ -45,12 +45,12 @@ public:
         return true;
     }
 
-    bool waitPop(T& item, int timeoutMs = 10) {
+    bool waitPop(T &item, int timeoutMs = 10) {
         std::unique_lock<std::mutex> lock(_mutex);
         if (!_cond.wait_for(lock, std::chrono::milliseconds(timeoutMs),
                             [this] {
-            return !_queue.empty();
-        }))
+                                return !_queue.empty();
+                            }))
             return false;
         item = std::move(_queue.front());
         _queue.pop_front();

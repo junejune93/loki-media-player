@@ -22,7 +22,7 @@ ShaderProgram::~ShaderProgram() {
     }
 }
 
-GLuint ShaderProgram::compileShader(GLenum type, const char* src) {
+GLuint ShaderProgram::compileShader(GLenum type, const char *src) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &src, nullptr);
     glCompileShader(shader);
@@ -37,7 +37,7 @@ GLuint ShaderProgram::compileShader(GLenum type, const char* src) {
     return shader;
 }
 
-bool ShaderProgram::loadVertexFragment(const char* vertSrc, const char* fragSrc) {
+bool ShaderProgram::loadVertexFragment(const char *vertSrc, const char *fragSrc) {
     GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vertSrc);
     GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragSrc);
 
@@ -66,10 +66,10 @@ void ShaderProgram::setupQuadGeometry() {
     float vertices[] = {
             -1.f, -1.f, 0.f, 0.f,
             1.f, -1.f, 1.f, 0.f,
-            1.f,  1.f, 1.f, 1.f,
-            -1.f,  1.f, 0.f, 1.f
+            1.f, 1.f, 1.f, 1.f,
+            -1.f, 1.f, 0.f, 1.f
     };
-    unsigned int indices[] = {0,1,2, 2,3,0};
+    unsigned int indices[] = {0, 1, 2, 2, 3, 0};
 
     glGenVertexArrays(1, &_vao);
     glGenBuffers(1, &_vbo);
@@ -81,9 +81,9 @@ void ShaderProgram::setupQuadGeometry() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)nullptr);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) nullptr);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
@@ -93,7 +93,7 @@ void ShaderProgram::use() const {
     glUseProgram(_program);
 }
 
-void ShaderProgram::setUniform1i(const std::string& name, int value) const {
+void ShaderProgram::setUniform1i(const std::string &name, int value) const {
     glUniform1i(glGetUniformLocation(_program, name.c_str()), value);
 }
 

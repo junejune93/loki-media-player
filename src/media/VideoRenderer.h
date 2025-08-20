@@ -7,19 +7,22 @@
 
 class VideoRenderer {
 public:
-    explicit VideoRenderer(GLFWwindow* win, int width, int height);
+    explicit VideoRenderer(GLFWwindow *win, int width, int height);
+
     ~VideoRenderer();
 
-    VideoRenderer(VideoRenderer&& other) noexcept;
-    VideoRenderer& operator=(VideoRenderer&& other) noexcept;
+    VideoRenderer(VideoRenderer &&other) noexcept;
 
-    VideoRenderer(const VideoRenderer&) = delete;
-    VideoRenderer& operator=(const VideoRenderer&) = delete;
+    VideoRenderer &operator=(VideoRenderer &&other) noexcept;
 
-    void renderFrame(const VideoFrame& frame);
+    VideoRenderer(const VideoRenderer &) = delete;
+
+    VideoRenderer &operator=(const VideoRenderer &) = delete;
+
+    void renderFrame(const VideoFrame &frame);
 
 private:
-    GLFWwindow* _window{nullptr};
+    GLFWwindow *_window{nullptr};
     GLuint _texture{0};
     int _width{0};
     int _height{0};

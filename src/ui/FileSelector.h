@@ -9,6 +9,7 @@
 class FileSelector {
 public:
     FileSelector() = default;
+
     ~FileSelector() = default;
 
     bool isVisible() const {
@@ -19,11 +20,11 @@ public:
         _visible = v;
     }
 
-    void setFiles(const std::vector<std::string>& files) {
+    void setFiles(const std::vector<std::string> &files) {
         _files = files;
     }
 
-    void setSelectCallback(std::function<void(const std::string&)> cb) {
+    void setSelectCallback(std::function<void(const std::string &)> cb) {
         _selectCallback = std::move(cb);
     }
 
@@ -34,7 +35,7 @@ public:
 
         ImGui::Begin("Select Video File", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
-        for (const auto& file : _files) {
+        for (const auto &file: _files) {
             if (ImGui::Selectable(file.c_str())) {
                 if (_selectCallback) {
                     _selectCallback(file);
@@ -49,5 +50,5 @@ public:
 private:
     bool _visible = false;
     std::vector<std::string> _files;
-    std::function<void(const std::string&)> _selectCallback;
+    std::function<void(const std::string &)> _selectCallback;
 };

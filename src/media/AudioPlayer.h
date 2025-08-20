@@ -1,4 +1,5 @@
 #pragma once
+
 #include <portaudio.h>
 #include <vector>
 #include <cstdint>
@@ -11,8 +12,8 @@
 class AudioPlayer {
 public:
     AudioPlayer(int sampleRate, int channels)
-        : _sampleRate(sampleRate),
-          _channels(channels) {
+            : _sampleRate(sampleRate),
+              _channels(channels) {
         if (Pa_Initialize() != paNoError) {
             throw std::runtime_error("Pa_Initialize failed");
         }
@@ -42,12 +43,12 @@ public:
         Pa_Terminate();
     }
 
-    void queueFrame(AudioFrame&& frame) {
+    void queueFrame(AudioFrame &&frame) {
         std::lock_guard<std::mutex> lock(_bufferMutex);
         _audioBuffer.emplace_back(std::move(frame));
     }
 
-    void queueFrame(const AudioFrame& frame) {
+    void queueFrame(const AudioFrame &frame) {
         std::lock_guard<std::mutex> lock(_bufferMutex);
         _audioBuffer.push_back(frame);
     }
@@ -57,7 +58,7 @@ public:
         double pts = _lastPlayedPts;
 
         size_t bufferedSamples = 0;
-        for (const auto& frame : _audioBuffer) {
+        for (const auto &frame: _audioBuffer) {
             bufferedSamples += frame.data.size() / sizeof(int16_t) / _channels;
         }
 
@@ -78,26 +79,26 @@ public:
     }
 
 private:
-    static int audioCallback(const void* /*inputBuffer*/,
-                             void* outputBuffer,
+    static int audioCallback(const void * /*inputBuffer*/,
+                             void *outputBuffer,
                              unsigned long framesPerBuffer,
-                             const PaStreamCallbackTimeInfo* /*timeInfo*/,
+                             const PaStreamCallbackTimeInfo * /*timeInfo*/,
                              PaStreamCallbackFlags /*statusFlags*/,
-                             void* userData) noexcept {
-        auto* player = static_cast<AudioPlayer*>(userData);
+                             void *userData) noexcept {
+        auto *player = static_cast<AudioPlayer *>(userData);
         return player->processAudio(outputBuffer, framesPerBuffer);
     }
 
-    int processAudio(void* outputBuffer, unsigned long framesPerBuffer) noexcept {
-        auto* out = static_cast<int16_t*>(outputBuffer);
+    int processAudio(void *outputBuffer, unsigned long framesPerBuffer) noexcept {
+        auto *out = static_cast<int16_t *>(outputBuffer);
         const size_t samplesNeeded = framesPerBuffer * _channels;
         size_t samplesWritten = 0;
 
         std::lock_guard<std::mutex> lock(_bufferMutex);
 
         while (samplesWritten < samplesNeeded && !_audioBuffer.empty()) {
-            auto& frame = _audioBuffer.front();
-            const auto* frameData = reinterpret_cast<const int16_t*>(frame.data.data());
+            auto &frame = _audioBuffer.front();
+            const auto *frameData = reinterpret_cast<const int16_t *>(frame.data.data());
             const size_t frameSamples = frame.data.size() / sizeof(int16_t);
             const size_t samplesToTake = std::min(samplesNeeded - samplesWritten, frameSamples - _currentFrameOffset);
 
@@ -123,7 +124,7 @@ private:
 private:
     int _sampleRate;
     int _channels;
-    PaStream* _stream{nullptr};
+    PaStream *_stream{nullptr};
 
     std::deque<AudioFrame> _audioBuffer;
     mutable std::mutex _bufferMutex;

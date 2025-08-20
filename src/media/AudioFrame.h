@@ -14,12 +14,12 @@ struct AudioFrame {
 
     AudioFrame() = default;
 
-    AudioFrame(int rate, int ch, int nbSamples, double timestamp, std::vector<uint8_t>&& buffer) noexcept
-        : sampleRate(rate),
-        channels(ch),
-        samples(nbSamples),
-        pts(timestamp),
-        data(std::move(buffer)) {
+    AudioFrame(int rate, int ch, int nbSamples, double timestamp, std::vector<uint8_t> &&buffer) noexcept
+            : sampleRate(rate),
+              channels(ch),
+              samples(nbSamples),
+              pts(timestamp),
+              data(std::move(buffer)) {
 
     }
 

@@ -9,7 +9,7 @@ UIManager::~UIManager() {
     shutdown();
 }
 
-bool UIManager::initialize(GLFWwindow* window) {
+bool UIManager::initialize(GLFWwindow *window) {
     if (_initialized) {
         return true;
     }
@@ -25,10 +25,10 @@ bool UIManager::initialize(GLFWwindow* window) {
 
     _fileSelector = std::make_unique<FileSelector>();
     _fileSelector->setFiles({
-                                     "../assets/big_buck_bunny_1080p_h264.mov",
-                                     "../assets/tears_of_steel_1080p_h264.mov",
-                                     "../assets/STARCRAFT_1080p_h264.mov"
-                             });
+                                    "../assets/big_buck_bunny_1080p_h264.mov",
+                                    "../assets/tears_of_steel_1080p_h264.mov",
+                                    "../assets/STARCRAFT_1080p_h264.mov"
+                            });
 
     if (_onFileSelected) {
         _fileSelector->setSelectCallback(_onFileSelected);
@@ -38,10 +38,10 @@ bool UIManager::initialize(GLFWwindow* window) {
     return true;
 }
 
-void UIManager::setOnFileSelected(const std::function<void(const std::string&)>& cb) {
+void UIManager::setOnFileSelected(const std::function<void(const std::string &)> &cb) {
     _onFileSelected = cb;
     if (_fileSelector) {
-        _fileSelector->setSelectCallback([this, cb](const std::string& file){
+        _fileSelector->setSelectCallback([this, cb](const std::string &file) {
             cb(file);
             _fileSelector->setVisible(false);
         });
@@ -50,7 +50,7 @@ void UIManager::setOnFileSelected(const std::function<void(const std::string&)>&
 
 void UIManager::setupStyle() {
     ImGui::StyleColorsDark();
-    ImGuiStyle& style = ImGui::GetStyle();
+    ImGuiStyle &style = ImGui::GetStyle();
 
     style.WindowRounding = 6.0f;
     style.FrameRounding = 4.0f;
@@ -59,7 +59,7 @@ void UIManager::setupStyle() {
     style.FramePadding = ImVec2(8, 4);
     style.GrabRounding = 4.0f;
 
-    ImVec4* colors = style.Colors;
+    ImVec4 *colors = style.Colors;
     colors[ImGuiCol_WindowBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
     colors[ImGuiCol_SliderGrab] = ImVec4(0.28f, 0.56f, 1.00f, 1.00f);
     colors[ImGuiCol_SliderGrabActive] = ImVec4(0.37f, 0.61f, 1.00f, 1.00f);

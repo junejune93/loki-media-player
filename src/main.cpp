@@ -12,7 +12,7 @@ int main() {
 
         app.run();
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << "Exception: " << e.what() << "\n";
         return 1;
     }

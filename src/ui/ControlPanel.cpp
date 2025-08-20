@@ -3,13 +3,14 @@
 #include "../core/Utils.h"
 
 ControlPanel::ControlPanel(int videoWidth, int controlsHeight)
-    : _videoWidth(videoWidth),
-    _controlsHeight(controlsHeight) {
+        : _videoWidth(videoWidth),
+          _controlsHeight(controlsHeight) {
 }
 
-void ControlPanel::render(MediaState& state) {
+void ControlPanel::render(MediaState &state) {
     ImGui::SetNextWindowPos(ImVec2(0, static_cast<float>(_videoWidth * 720 / 1280)), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(_videoWidth), static_cast<float>(_controlsHeight)), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(_videoWidth), static_cast<float>(_controlsHeight)),
+                             ImGuiCond_Always);
 
     ImGui::Begin("MediaControls", nullptr,
                  ImGuiWindowFlags_NoTitleBar |
@@ -26,7 +27,7 @@ void ControlPanel::render(MediaState& state) {
     ImGui::End();
 }
 
-void ControlPanel::renderProgressBar(MediaState& state) {
+void ControlPanel::renderProgressBar(MediaState &state) {
     ImGui::SetCursorPosY(8);
     auto progress = static_cast<float>(state.getProgress());
     float progressValue = progress;
@@ -45,13 +46,13 @@ void ControlPanel::renderProgressBar(MediaState& state) {
     ImGui::PopItemWidth();
 }
 
-void ControlPanel::renderTimeDisplay(const MediaState& state) {
+void ControlPanel::renderTimeDisplay(const MediaState &state) {
     ImGui::SameLine();
     std::string timeText = Utils::formatTime(state.currentTime) + " / " + Utils::formatTime(state.totalDuration);
     ImGui::TextUnformatted(timeText.c_str());
 }
 
-void ControlPanel::renderControlButtons(const MediaState& state) {
+void ControlPanel::renderControlButtons(const MediaState &state) {
     ImGui::SetCursorPosY(35);
 
     const float buttonWidth = 60.0f;
@@ -64,7 +65,7 @@ void ControlPanel::renderControlButtons(const MediaState& state) {
     ImGui::SetCursorPosX(startX);
 
     // Play/Pause Toggle
-    const char* playPauseLabel = state.isPlaying ? "Pause" : "Play";
+    const char *playPauseLabel = state.isPlaying ? "Pause" : "Play";
     if (ImGui::Button(playPauseLabel, ImVec2(buttonWidth, buttonHeight))) {
         if (state.isPlaying) {
             if (_onPause) {

@@ -1,16 +1,13 @@
 #include "AudioThread.h"
 #include "../core/Utils.h"
 
-AudioThread::AudioThread(ThreadSafeQueue<AudioFrame>& audioQueue,
-                         ThreadSafeQueue<VideoFrame>& videoQueue,
-                         AudioPlayer& audioPlayer,
-                         SyncManager& syncManager,
-                         Decoder& decoder)
-        : _audioQueue(audioQueue)
-        , _videoQueue(videoQueue)
-        , _audioPlayer(audioPlayer)
-        , _syncManager(syncManager)
-        , _decoder(decoder) {
+AudioThread::AudioThread(ThreadSafeQueue<AudioFrame> &audioQueue,
+                         ThreadSafeQueue<VideoFrame> &videoQueue,
+                         AudioPlayer &audioPlayer,
+                         SyncManager &syncManager,
+                         Decoder &decoder)
+        : _audioQueue(audioQueue), _videoQueue(videoQueue), _audioPlayer(audioPlayer), _syncManager(syncManager),
+          _decoder(decoder) {
 }
 
 AudioThread::~AudioThread() {
@@ -50,7 +47,7 @@ void AudioThread::run() {
             }
 
             if (auto afOpt = Utils::waitPopOpt(_audioQueue, 10)) {
-                auto& af = *afOpt;
+                auto &af = *afOpt;
                 _audioPlayer.queueFrame(af);
                 _syncManager.setAudioClock(_audioPlayer.getCurrentPts());
                 _currentTime = _audioPlayer.getCurrentPts();

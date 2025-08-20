@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <utility>
 
-Decoder::Decoder(std::string  file) : filename(std::move(file)) {
+Decoder::Decoder(std::string file) : filename(std::move(file)) {
     avformat_network_init();
 
     if (avformat_open_input(&_fmtCtx, filename.c_str(), nullptr, nullptr) != 0)
@@ -16,7 +16,7 @@ Decoder::Decoder(std::string  file) : filename(std::move(file)) {
 
     // Find streams
     for (unsigned i = 0; i < _fmtCtx->nb_streams; ++i) {
-        AVCodecParameters* par = _fmtCtx->streams[i]->codecpar;
+        AVCodecParameters *par = _fmtCtx->streams[i]->codecpar;
         if (par->codec_type == AVMEDIA_TYPE_VIDEO && _videoStreamIndex < 0) {
             _videoStreamIndex = static_cast<int>(i);
         } else if (par->codec_type == AVMEDIA_TYPE_AUDIO && _audioStreamIndex < 0) {
@@ -28,8 +28,8 @@ Decoder::Decoder(std::string  file) : filename(std::move(file)) {
 
     // Video codec
     {
-        AVStream* vs = _fmtCtx->streams[_videoStreamIndex];
-        const AVCodec* vcodec = avcodec_find_decoder(vs->codecpar->codec_id);
+        AVStream *vs = _fmtCtx->streams[_videoStreamIndex];
+        const AVCodec *vcodec = avcodec_find_decoder(vs->codecpar->codec_id);
         if (!vcodec) throw std::runtime_error("Video codec not found");
         _videoCtx = avcodec_alloc_context3(vcodec);
         avcodec_parameters_to_context(_videoCtx, vs->codecpar);
@@ -46,8 +46,8 @@ Decoder::Decoder(std::string  file) : filename(std::move(file)) {
 
     // Audio codec (optional)
     if (_audioStreamIndex >= 0) {
-        AVStream* as = _fmtCtx->streams[_audioStreamIndex];
-        const AVCodec* acodec = avcodec_find_decoder(as->codecpar->codec_id);
+        AVStream *as = _fmtCtx->streams[_audioStreamIndex];
+        const AVCodec *acodec = avcodec_find_decoder(as->codecpar->codec_id);
         if (!acodec) throw std::runtime_error("Audio codec not found");
         _audioCtx = avcodec_alloc_context3(acodec);
         avcodec_parameters_to_context(_audioCtx, as->codecpar);
@@ -63,7 +63,7 @@ Decoder::Decoder(std::string  file) : filename(std::move(file)) {
         _swrCtx = swr_alloc();
         if (!_swrCtx) throw std::runtime_error("Failed to alloc _swrCtx");
 
-        av_opt_set_int(_swrCtx, "in_channel_layout", (long)in_ch_layout, 0);
+        av_opt_set_int(_swrCtx, "in_channel_layout", (long) in_ch_layout, 0);
         av_opt_set_int(_swrCtx, "out_channel_layout", AV_CH_LAYOUT_STEREO, 0);
         av_opt_set_int(_swrCtx, "in_sample_rate", _audioCtx->sample_rate, 0);
         av_opt_set_int(_swrCtx, "out_sample_rate", _audioCtx->sample_rate, 0);
@@ -77,11 +77,11 @@ Decoder::Decoder(std::string  file) : filename(std::move(file)) {
 
 Decoder::~Decoder() {
     stop();
-    if (_swsCtx)   sws_freeContext(_swsCtx);
+    if (_swsCtx) sws_freeContext(_swsCtx);
     if (_videoCtx) avcodec_free_context(&_videoCtx);
     if (_audioCtx) avcodec_free_context(&_audioCtx);
-    if (_swrCtx)   swr_free(&_swrCtx);
-    if (_fmtCtx)   avformat_close_input(&_fmtCtx);
+    if (_swrCtx) swr_free(&_swrCtx);
+    if (_fmtCtx) avformat_close_input(&_fmtCtx);
     avformat_network_deinit();
 }
 
@@ -107,7 +107,7 @@ double Decoder::getDuration() const {
     }
 
     if (_videoStreamIndex >= 0) {
-        AVStream* vs = _fmtCtx->streams[_videoStreamIndex];
+        AVStream *vs = _fmtCtx->streams[_videoStreamIndex];
         if (vs->duration != AV_NOPTS_VALUE) {
             return static_cast<double>(vs->duration) * av_q2d(vs->time_base);
         }
@@ -128,9 +128,9 @@ bool Decoder::seek(double timeInSeconds) {
 }
 
 void Decoder::startDecoding() {
-    AVPacket* packet = av_packet_alloc();
-    AVFrame*  vfr    = av_frame_alloc();
-    AVFrame*  afr    = av_frame_alloc();
+    AVPacket *packet = av_packet_alloc();
+    AVFrame *vfr = av_frame_alloc();
+    AVFrame *afr = av_frame_alloc();
 
     const size_t MAX_QUEUE_SIZE = 50;
     bool firstAudioFrame = true;
@@ -170,10 +170,11 @@ void Decoder::startDecoding() {
                 while (avcodec_receive_frame(_audioCtx, afr) >= 0) {
                     AudioFrame af;
                     af.sampleRate = _audioCtx->sample_rate;
-                    af.channels   = 2;
-                    af.samples    = afr->nb_samples;
+                    af.channels = 2;
+                    af.samples = afr->nb_samples;
                     af.pts = (afr->best_effort_timestamp == AV_NOPTS_VALUE) ? 0.0
-                                                                            : (double)afr->best_effort_timestamp * av_q2d(_audioTimeBase);
+                                                                            : (double) afr->best_effort_timestamp *
+                                                                              av_q2d(_audioTimeBase);
 
                     if (firstAudioFrame) {
                         audioStartPTS = af.pts;
@@ -184,8 +185,9 @@ void Decoder::startDecoding() {
                     int outSamples = swr_get_out_samples(_swrCtx, afr->nb_samples);
                     int outBytes = av_samples_get_buffer_size(nullptr, af.channels, outSamples, AV_SAMPLE_FMT_S16, 1);
                     af.data.resize(outBytes);
-                    uint8_t* outData[1] = { af.data.data() };
-                    int convertedSamples = swr_convert(_swrCtx, outData, outSamples, (const uint8_t**)afr->data, afr->nb_samples);
+                    uint8_t *outData[1] = {af.data.data()};
+                    int convertedSamples = swr_convert(_swrCtx, outData, outSamples, (const uint8_t **) afr->data,
+                                                       afr->nb_samples);
 
                     if (convertedSamples > 0) {
                         af.data.resize(convertedSamples * af.channels * sizeof(int16_t));
@@ -201,14 +203,15 @@ void Decoder::startDecoding() {
             if (avcodec_send_packet(_videoCtx, packet) >= 0) {
                 while (avcodec_receive_frame(_videoCtx, vfr) >= 0) {
                     VideoFrame vf;
-                    vf.width  = vfr->width;
+                    vf.width = vfr->width;
                     vf.height = vfr->height;
                     vf.pts = (vfr->best_effort_timestamp == AV_NOPTS_VALUE) ? 0.0
-                                                                            : (double)vfr->best_effort_timestamp * av_q2d(_videoTimeBase);
+                                                                            : (double) vfr->best_effort_timestamp *
+                                                                              av_q2d(_videoTimeBase);
 
                     vf.data.resize(vf.width * vf.height * 3);
-                    uint8_t* dest[1] = { vf.data.data() };
-                    int lines[1] = { 3 * vf.width };
+                    uint8_t *dest[1] = {vf.data.data()};
+                    int lines[1] = {3 * vf.width};
                     sws_scale(_swsCtx, vfr->data, vfr->linesize, 0, vf.height, dest, lines);
 
                     if (!firstAudioFrame) {

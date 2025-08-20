@@ -9,7 +9,7 @@ MediaPlayer::~MediaPlayer() {
     stop();
 }
 
-bool MediaPlayer::initialize(GLFWwindow* window, int videoWidth, int videoHeight) {
+bool MediaPlayer::initialize(GLFWwindow *window, int videoWidth, int videoHeight) {
     _videoWidth = videoWidth;
     _videoHeight = videoHeight;
 
@@ -41,7 +41,7 @@ bool MediaPlayer::initialize(GLFWwindow* window, int videoWidth, int videoHeight
 bool MediaPlayer::initializeShaders() {
     _shaderProgram = std::make_unique<ShaderProgram>();
 
-    const char* vertexShaderSrc = R"(
+    const char *vertexShaderSrc = R"(
         #version 330 core
         layout (location = 0) in vec2 aPos;
         layout (location = 1) in vec2 aTex;
@@ -51,7 +51,7 @@ bool MediaPlayer::initializeShaders() {
             gl_Position = vec4(aPos.xy, 0.0, 1.0);
         })";
 
-    const char* fragmentShaderSrc = R"(
+    const char *fragmentShaderSrc = R"(
         #version 330 core
         out vec4 FragColor;
         in vec2 TexCoord;
@@ -61,7 +61,7 @@ bool MediaPlayer::initializeShaders() {
     return _shaderProgram->loadVertexFragment(vertexShaderSrc, fragmentShaderSrc);
 }
 
-bool MediaPlayer::loadFile(const std::string& filename) {
+bool MediaPlayer::loadFile(const std::string &filename) {
     try {
         // Clean up existing decoder
         if (_decoder) {
@@ -87,7 +87,7 @@ bool MediaPlayer::loadFile(const std::string& filename) {
         _audioThread->start();
         return true;
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << "Failed to load file: " << e.what() << "\n";
         return false;
     }
@@ -160,10 +160,10 @@ void MediaPlayer::update() {
 
     auto now = std::chrono::steady_clock::now();
     if (now - _lastFrameTime >= TARGET_FRAME_TIME) {
-        auto& videoQueue = _decoder->getVideoQueue();
+        auto &videoQueue = _decoder->getVideoQueue();
 
         if (auto vfOpt = Utils::waitPopOpt(videoQueue, 5)) {
-            auto& vf = *vfOpt;
+            auto &vf = *vfOpt;
             if (!_syncManager->syncVideo(vf)) return;
 
             _backFBO->bind();

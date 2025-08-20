@@ -22,28 +22,34 @@ extern "C" {
 
 class Decoder {
 public:
-    explicit Decoder(std::string  filename);
+    explicit Decoder(std::string filename);
+
     ~Decoder();
 
     void start();
+
     void stop();
+
     void flush();
+
     double getDuration() const;
+
     bool seek(double timeInSeconds);
 
-    ThreadSafeQueue<VideoFrame>& getVideoQueue() { return _videoQueue; }
-    ThreadSafeQueue<AudioFrame>& getAudioQueue() { return _audioQueue; }
+    ThreadSafeQueue<VideoFrame> &getVideoQueue() { return _videoQueue; }
+
+    ThreadSafeQueue<AudioFrame> &getAudioQueue() { return _audioQueue; }
 
 private:
     void startDecoding();
 
     std::string filename;
 
-    AVFormatContext* _fmtCtx{nullptr};
-    AVCodecContext* _videoCtx{nullptr};
-    AVCodecContext* _audioCtx{nullptr};
-    SwrContext*     _swrCtx{nullptr};
-    SwsContext*     _swsCtx{nullptr};
+    AVFormatContext *_fmtCtx{nullptr};
+    AVCodecContext *_videoCtx{nullptr};
+    AVCodecContext *_audioCtx{nullptr};
+    SwrContext *_swrCtx{nullptr};
+    SwsContext *_swsCtx{nullptr};
 
     int _videoStreamIndex{-1};
     int _audioStreamIndex{-1};

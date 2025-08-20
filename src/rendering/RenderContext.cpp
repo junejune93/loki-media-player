@@ -4,27 +4,27 @@
 #include "RenderContext.h"
 
 
-RenderContext::RenderContext(GLFWwindow* window) 
-    : _renderWindow(window) {
+RenderContext::RenderContext(GLFWwindow *window)
+        : _renderWindow(window) {
 }
 
 bool RenderContext::initialize() {
     if (_initialized) {
         return true;
     }
-    
+
     if (!_renderWindow) {
         std::cerr << "Window is null\n";
         return false;
     }
-    
+
     glfwMakeContextCurrent(_renderWindow);
-    
+
     if (glewInit() != GLEW_OK) {
         std::cerr << "Failed to initialize GLEW\n";
         return false;
     }
-    
+
     // Enable basic OpenGL features
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

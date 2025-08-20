@@ -7,10 +7,11 @@
 
 namespace Utils {
     std::string formatTime(double seconds);
-    std::string selectVideoFile(const std::vector<std::string>& files);
+
+    std::string selectVideoFile(const std::vector<std::string> &files);
 
     template<typename T>
-    std::optional<T> waitPopOpt(ThreadSafeQueue<T>& queue, int timeoutMs = 10) {
+    std::optional<T> waitPopOpt(ThreadSafeQueue<T> &queue, int timeoutMs = 10) {
         T item;
         if (queue.waitPop(item, timeoutMs)) {
             return item;

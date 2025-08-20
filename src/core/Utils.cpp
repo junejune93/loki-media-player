@@ -11,7 +11,7 @@ namespace Utils {
         return std::string(buffer);
     }
 
-    std::string selectVideoFile(const std::vector<std::string>& files) {
+    std::string selectVideoFile(const std::vector<std::string> &files) {
         std::cout << "Select a video to play:\n";
         for (size_t i = 0; i < files.size(); ++i)
             std::cout << "  " << (i + 1) << ": " << files[i] << "\n";

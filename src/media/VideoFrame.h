@@ -12,17 +12,19 @@ struct VideoFrame {
 
     VideoFrame() = default;
 
-    VideoFrame(VideoFrame&&) noexcept = default;
-    VideoFrame& operator=(VideoFrame&&) noexcept = default;
+    VideoFrame(VideoFrame &&) noexcept = default;
 
-    VideoFrame(const VideoFrame&) = default;
-    VideoFrame& operator=(const VideoFrame&) = default;
+    VideoFrame &operator=(VideoFrame &&) noexcept = default;
 
-    VideoFrame(int w, int h, double t, std::vector<uint8_t>&& d)
-        : width(w),
-        height(h),
-        pts(t),
-        data(std::move(d)) {
+    VideoFrame(const VideoFrame &) = default;
+
+    VideoFrame &operator=(const VideoFrame &) = default;
+
+    VideoFrame(int w, int h, double t, std::vector<uint8_t> &&d)
+            : width(w),
+              height(h),
+              pts(t),
+              data(std::move(d)) {
 
     }
 };

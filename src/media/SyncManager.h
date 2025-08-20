@@ -10,11 +10,11 @@
 class SyncManager {
 public:
     SyncManager()
-        : _firstVideoPts(-1.0),
-          _firstAudioPts(-1.0),
-          _dropCount(0),
-          _initialized(false),
-          _paused(false) {
+            : _firstVideoPts(-1.0),
+              _firstAudioPts(-1.0),
+              _dropCount(0),
+              _initialized(false),
+              _paused(false) {
 
     }
 
@@ -67,7 +67,9 @@ public:
     bool isInitialized() const { return _initialized; }
 
     void pause() noexcept { _paused = true; }
+
     void resume() noexcept { _paused = false; }
+
     bool isPaused() const noexcept { return _paused; }
 
     void reset() {
