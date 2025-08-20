@@ -94,6 +94,9 @@ loki_media_player/
 │   │   ├── ControlPanel.h      # Control panel interface
 │   │   ├── FileSelector.cpp    # File selection dialog implementation
 │   │   ├── FileSelector.h      # File selector interface
+│   │   ├── OSDRenderer.cpp     # OSD Rendering implementation
+│   │   ├── OSDRenderer.h       # OSD Rendering
+│   │   ├── OSDState.h          # OSD state management
 │   │   ├── UIManager.cpp       # UI management implementation
 │   │   └── UIManager.h         # UI manager
 │   ├── gl_common.h             # OpenGL common headers
