@@ -9,6 +9,11 @@
 
 ---
 
+## Screenshot
+![Screenshot1](/assets/Screenshot1.png)
+
+---
+
 ## Features
 - Multi-format Support**: Supports all major video/audio formats via FFmpeg (MP4, MOV, AVI, MKV, etc.)
 - Hardware Acceleration**: OpenGL-based video rendering for smooth performance
@@ -124,13 +129,6 @@ loki_media_player/
                    │             │
                    └─────────────┘
 ```
-
----
-
-## Screenshot
-![Screenshot1](/assets/Screenshot1.png)
-![Screenshot2](/assets/Screenshot2.png)
-![Screenshot3](/assets/Screenshot3.png)
 
 ---
 
