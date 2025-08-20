@@ -6,13 +6,16 @@
 #include "core/Utils.h"
 #include "imgui.h"
 #include <iostream>
+#include <filesystem>
 
 Application::Application() {
-    _videoFiles = {
-            "../assets/big_buck_bunny_1080p_h264.mov",
-            "../assets/tears_of_steel_1080p_h264.mov",
-            "../assets/STARCRAFT_1080p_h264.mov"
-    };
+    _videoFiles.clear();
+    std::string assetsPath = "../assets/";
+    for (const auto& entry : std::filesystem::directory_iterator(assetsPath)) {
+        if (entry.is_regular_file()) {
+            _videoFiles.push_back(entry.path().string());
+        }
+    }
     _selectedFile.clear();
     _fileLoaded = false;
 }

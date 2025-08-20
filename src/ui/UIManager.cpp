@@ -1,3 +1,4 @@
+#include <filesystem>
 #include "UIManager.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -26,11 +27,15 @@ bool UIManager::initialize(GLFWwindow *window) {
     _controlPanel = std::make_unique<ControlPanel>(1280, 80);
 
     _fileSelector = std::make_unique<FileSelector>();
-    _fileSelector->setFiles({
-                                    "../assets/big_buck_bunny_1080p_h264.mov",
-                                    "../assets/tears_of_steel_1080p_h264.mov",
-                                    "../assets/STARCRAFT_1080p_h264.mov"
-                            });
+
+    std::vector<std::string> files;
+    std::string assetsPath = "../assets/";
+    for (const auto& entry : std::filesystem::directory_iterator(assetsPath)) {
+        if (entry.is_regular_file()) {
+            files.push_back(entry.path().string());
+        }
+    }
+    _fileSelector->setFiles(files);
 
     if (_onFileSelected) {
         _fileSelector->setSelectCallback(_onFileSelected);
