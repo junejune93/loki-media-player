@@ -81,7 +81,7 @@ void ShaderProgram::setupQuadGeometry() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)nullptr);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
@@ -89,16 +89,16 @@ void ShaderProgram::setupQuadGeometry() {
     glBindVertexArray(0);
 }
 
-void ShaderProgram::use() {
+void ShaderProgram::use() const {
     glUseProgram(_program);
 }
 
-void ShaderProgram::setUniform1i(const std::string& name, int value) {
+void ShaderProgram::setUniform1i(const std::string& name, int value) const {
     glUniform1i(glGetUniformLocation(_program, name.c_str()), value);
 }
 
-void ShaderProgram::drawQuad() {
+void ShaderProgram::drawQuad() const {
     glBindVertexArray(_vao);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
 }

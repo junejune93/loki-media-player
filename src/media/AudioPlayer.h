@@ -97,7 +97,7 @@ private:
 
         while (samplesWritten < samplesNeeded && !_audioBuffer.empty()) {
             auto& frame = _audioBuffer.front();
-            const int16_t* frameData = reinterpret_cast<const int16_t*>(frame.data.data());
+            const auto* frameData = reinterpret_cast<const int16_t*>(frame.data.data());
             const size_t frameSamples = frame.data.size() / sizeof(int16_t);
             const size_t samplesToTake = std::min(samplesNeeded - samplesWritten, frameSamples - _currentFrameOffset);
 

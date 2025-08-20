@@ -36,7 +36,7 @@ void VideoFBO::create(int w, int h) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void VideoFBO::bind() {
+void VideoFBO::bind() const {
     glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 }
 
@@ -44,7 +44,7 @@ void VideoFBO::unbind() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void VideoFBO::updateTexture(const uint8_t* frameData) {
+void VideoFBO::updateTexture(const uint8_t* frameData) const {
     glBindTexture(GL_TEXTURE_2D, _texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _width, _height,
                     GL_RGB, GL_UNSIGNED_BYTE, frameData);

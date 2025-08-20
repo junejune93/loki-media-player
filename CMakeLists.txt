@@ -30,7 +30,9 @@ ADD_EXECUTABLE(loki_media_player
         src/core/MediaPlayer.cpp
         src/ui/ControlPanel.cpp
         src/ui/FileSelector.cpp
+        src/ui/UIManager.cpp
         src/rendering/ShaderProgram.cpp
+        src/rendering/RenderContext.cpp
         src/rendering/VideoFBO.cpp
         src/threads/AudioThread.cpp
         src/media/Decoder.cpp
@@ -41,7 +43,6 @@ ADD_EXECUTABLE(loki_media_player
         ${IMGUI_DIR}/imgui_tables.cpp
         ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
         ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
-        src/ui/UIManager.cpp
 )
 
 # INCLUDE

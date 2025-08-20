@@ -22,7 +22,7 @@ extern "C" {
 
 class Decoder {
 public:
-    explicit Decoder(const std::string& filename);
+    explicit Decoder(std::string  filename);
     ~Decoder();
 
     void start();

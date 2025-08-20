@@ -3,8 +3,9 @@
 #include "AudioPlayer.h"
 #include <iostream>
 #include <stdexcept>
+#include <utility>
 
-Decoder::Decoder(const std::string& file) : filename(file) {
+Decoder::Decoder(std::string  file) : filename(std::move(file)) {
     avformat_network_init();
 
     if (avformat_open_input(&_fmtCtx, filename.c_str(), nullptr, nullptr) != 0)
@@ -62,7 +63,7 @@ Decoder::Decoder(const std::string& file) : filename(file) {
         _swrCtx = swr_alloc();
         if (!_swrCtx) throw std::runtime_error("Failed to alloc _swrCtx");
 
-        av_opt_set_int(_swrCtx, "in_channel_layout", in_ch_layout, 0);
+        av_opt_set_int(_swrCtx, "in_channel_layout", (long)in_ch_layout, 0);
         av_opt_set_int(_swrCtx, "out_channel_layout", AV_CH_LAYOUT_STEREO, 0);
         av_opt_set_int(_swrCtx, "in_sample_rate", _audioCtx->sample_rate, 0);
         av_opt_set_int(_swrCtx, "out_sample_rate", _audioCtx->sample_rate, 0);
@@ -141,7 +142,7 @@ void Decoder::startDecoding() {
         // SEEK
         if (_seekRequested.load()) {
             double seekTime = _seekTarget.load();
-            int64_t seekTimestamp = static_cast<int64_t>(seekTime * AV_TIME_BASE);
+            auto seekTimestamp = static_cast<int64_t>(seekTime * AV_TIME_BASE);
             if (av_seek_frame(_fmtCtx, -1, seekTimestamp, AVSEEK_FLAG_BACKWARD) >= 0) {
                 if (_videoCtx) {
                     avcodec_flush_buffers(_videoCtx);
@@ -172,7 +173,7 @@ void Decoder::startDecoding() {
                     af.channels   = 2;
                     af.samples    = afr->nb_samples;
                     af.pts = (afr->best_effort_timestamp == AV_NOPTS_VALUE) ? 0.0
-                                                                            : afr->best_effort_timestamp * av_q2d(_audioTimeBase);
+                                                                            : (double)afr->best_effort_timestamp * av_q2d(_audioTimeBase);
 
                     if (firstAudioFrame) {
                         audioStartPTS = af.pts;
@@ -203,7 +204,7 @@ void Decoder::startDecoding() {
                     vf.width  = vfr->width;
                     vf.height = vfr->height;
                     vf.pts = (vfr->best_effort_timestamp == AV_NOPTS_VALUE) ? 0.0
-                                                                            : vfr->best_effort_timestamp * av_q2d(_videoTimeBase);
+                                                                            : (double)vfr->best_effort_timestamp * av_q2d(_videoTimeBase);
 
                     vf.data.resize(vf.width * vf.height * 3);
                     uint8_t* dest[1] = { vf.data.data() };

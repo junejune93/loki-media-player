@@ -8,14 +8,14 @@ public:
     ~ShaderProgram();
 
     bool loadVertexFragment(const char* vertSrc, const char* fragSrc);
-    void use();
-    void setUniform1i(const std::string& name, int value);
-    void drawQuad();
+    void use() const;
+    void setUniform1i(const std::string& name, int value) const;
+    void drawQuad() const;
 
     GLuint getProgram() const { return _program; }
 
 private:
-    GLuint compileShader(GLenum type, const char* src);
+    static GLuint compileShader(GLenum type, const char* src);
     void setupQuadGeometry();
 
     GLuint _program = 0;

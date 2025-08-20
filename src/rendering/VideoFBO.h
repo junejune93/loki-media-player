@@ -9,9 +9,9 @@ public:
     ~VideoFBO();
 
     void create(int w, int h);
-    void bind();
-    void unbind();
-    void updateTexture(const uint8_t* frameData);
+    void bind() const;
+    static void unbind();
+    void updateTexture(const uint8_t* frameData) const;
 
     GLuint getTexture() const { return _texture; }
     int getWidth() const { return _width; }

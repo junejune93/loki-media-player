@@ -5,7 +5,7 @@
 
 class RenderContext {
 public:
-    RenderContext(GLFWwindow* window);
+    explicit RenderContext(GLFWwindow* window);
     ~RenderContext() = default;
 
     bool initialize();
