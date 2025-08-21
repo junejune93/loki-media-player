@@ -210,7 +210,6 @@ void Application::updateOSDData() {
     osdMediaState.isPlaying = mediaState.isPlaying;
     osdMediaState.playbackSpeed = mediaState.playbackSpeed;
     osdMediaState.volume = mediaState.volume;
-    osdMediaState.isBuffering = mediaState.isBuffering;
     osdMediaState.audioVideoSyncOffset = mediaState.audioVideoSyncOffset;
 
     const auto duration = _mediaPlayer->getDuration();
