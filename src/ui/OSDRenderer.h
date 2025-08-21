@@ -16,11 +16,13 @@ public:
     void handleInput(GLFWwindow *window, OSDState &state);
 
 private:
-    static void renderPlaybackInfo(const OSDState &state);
-
-    static void renderStatusInfo(const OSDState &state, int windowWidth);
+    static void renderPlaybackInfo(const OSDState &state, int windowWidth);
 
     static void renderCodecInfo(const OSDState &state, int windowWidth, int windowHeight);
+
+    static void renderSyncInfo(const OSDState &state, int windowWidth, int windowHeight);
+
+    static void renderSensorInfo(const OSDState &state, int windowWidth, int windowHeight);
 
     void renderCenterStatus(const OSDState &state, int windowWidth, int windowHeight);
 
