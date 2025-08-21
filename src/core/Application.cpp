@@ -18,6 +18,10 @@ Application::Application() {
     }
     _selectedFile.clear();
     _fileLoaded = false;
+
+    // Load Sensor Info (CSV)
+    std::string csvPath = "../assets/sensor_data.csv";
+    _sensorSource = std::make_unique<CsvSensorSource>(csvPath);
 }
 
 Application::~Application() {
@@ -34,6 +38,15 @@ bool Application::initialize() {
     }
 
     if (!initializeUI()) {
+        return false;
+    }
+
+    // Sensor Info - collection
+    try {
+        _sensorSource->start();
+        std::cout << "Sensor source initialized successfully\n";
+    } catch (const std::exception &e) {
+        std::cerr << "Failed to initialize sensor source: " << e.what() << "\n";
         return false;
     }
 
