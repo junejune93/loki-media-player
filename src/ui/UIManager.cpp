@@ -119,7 +119,6 @@ void UIManager::updateOSDData(
     _osdState.isPlaying = mediaState.isPlaying;
     _osdState.playbackSpeed = mediaState.playbackSpeed;
     _osdState.volumeLevel = mediaState.volume;
-    _osdState.isBuffering = mediaState.isBuffering;
 
     if (!fileName.empty()) {
         _osdState.fileName = OSDState::extractFileName(fileName);
