@@ -30,6 +30,36 @@ struct OSDState {
     bool isPlaying = false;
     bool isBuffering = false;
     std::string syncStatus = "Synced";
+    
+    // OSD - Sensor Data
+    struct SensorReadings {
+        double temperature = 0.0;
+        double humidity = 0.0;
+        double acceleration = 0.0;
+        std::string source;
+        std::chrono::steady_clock::time_point timestamp;
+        
+        void update(double temp, double hum, double accel, const std::string& src) {
+            temperature = temp;
+            humidity = hum;
+            acceleration = accel;
+            source = src;
+            timestamp = std::chrono::steady_clock::now();
+        }
+        
+        std::string getFormattedTimeSinceUpdate() const {
+            auto now = std::chrono::steady_clock::now();
+            auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - timestamp).count();
+            
+            if (diff < 1000) {
+                return std::to_string(diff) + "ms ago";
+            } else if (diff < 60000) {
+                return std::to_string(diff / 1000) + "s ago";
+            } else {
+                return std::to_string(diff / 60000) + "m ago";
+            }
+        }
+    } sensorReadings;
 
     // OSD - Codec Info
     CodecInfo codecInfo;
