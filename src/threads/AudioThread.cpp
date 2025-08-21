@@ -5,9 +5,9 @@ AudioThread::AudioThread(ThreadSafeQueue<AudioFrame> &audioQueue,
                          ThreadSafeQueue<VideoFrame> &videoQueue,
                          AudioPlayer &audioPlayer,
                          SyncManager &syncManager,
-                         Decoder &decoder)
+                         IVideoSource &source)
         : _audioQueue(audioQueue), _videoQueue(videoQueue), _audioPlayer(audioPlayer), _syncManager(syncManager),
-          _decoder(decoder) {
+          _source(source) {
 }
 
 AudioThread::~AudioThread() {
@@ -38,7 +38,7 @@ void AudioThread::run() {
         if (_playing) {
             // Handle seek requests
             if (_seekRequested) {
-                _decoder.seek(_seekTarget);
+                _source.seek(_seekTarget);
                 _syncManager.reset();
                 _videoQueue.clear();
                 _audioQueue.clear();

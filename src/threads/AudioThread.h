@@ -7,7 +7,7 @@
 #include "../media/AudioFrame.h"
 #include "../media/AudioPlayer.h"
 #include "../media/SyncManager.h"
-#include "../media/Decoder.h"
+#include "media/interface/IVideoSource.h"
 
 struct VideoFrame;
 
@@ -17,7 +17,7 @@ public:
                 ThreadSafeQueue<VideoFrame> &videoQueue,
                 AudioPlayer &audioPlayer,
                 SyncManager &syncManager,
-                Decoder &decoder);
+                IVideoSource &source);
 
     ~AudioThread();
 
@@ -45,5 +45,5 @@ private:
     ThreadSafeQueue<VideoFrame> &_videoQueue;
     AudioPlayer &_audioPlayer;
     SyncManager &_syncManager;
-    Decoder &_decoder;
+    IVideoSource &_source;
 };
