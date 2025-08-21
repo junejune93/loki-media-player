@@ -28,7 +28,6 @@ struct OSDState {
 
     // OSD - Playing State
     bool isPlaying = false;
-    bool isBuffering = false;
     std::string syncStatus = "Synced";
     
     // OSD - Sensor Data
