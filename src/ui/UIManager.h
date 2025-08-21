@@ -28,6 +28,16 @@ public:
     FileSelector *getFileSelector() { return _fileSelector.get(); }
 
     // OSD
+    void updateOSDData(
+        const MediaState &mediaState, 
+        const CodecInfo &codecState, 
+        const std::string &fileName,
+        double temperature = 0.0,
+        double humidity = 0.0,
+        double acceleration = 0.0,
+        const std::string &sensorSource = ""
+    );
+    
     void updateOSDData(const MediaState &mediaState, const CodecInfo &codecState, const std::string &fileName);
 
     void handleOSDInput(GLFWwindow *window);

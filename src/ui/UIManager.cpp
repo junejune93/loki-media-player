@@ -103,7 +103,15 @@ void UIManager::render() {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void UIManager::updateOSDData(const MediaState &mediaState, const CodecInfo &codecInfo, const std::string &fileName) {
+void UIManager::updateOSDData(
+    const MediaState &mediaState, 
+    const CodecInfo &codecInfo, 
+    const std::string &fileName,
+    double temperature,
+    double humidity,
+    double acceleration,
+    const std::string &sensorSource
+) {
     if (!_initialized) return;
 
     _osdState.currentTime = mediaState.currentTime;
@@ -118,8 +126,14 @@ void UIManager::updateOSDData(const MediaState &mediaState, const CodecInfo &cod
     }
 
     _osdState.codecInfo = codecInfo;
-
     _osdState.syncStatus = (mediaState.audioVideoSyncOffset < 40) ? "Synced" : "Out of Sync";
+    
+    // Update sensor data
+    _osdState.sensorReadings.update(temperature, humidity, acceleration, sensorSource);
+}
+
+void UIManager::updateOSDData(const MediaState &mediaState, const CodecInfo &codecInfo, const std::string &fileName) {
+    updateOSDData(mediaState, codecInfo, fileName, 0.0, 0.0, 0.0, "");
 }
 
 void UIManager::handleOSDInput(GLFWwindow *window) {
