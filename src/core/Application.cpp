@@ -50,6 +50,7 @@ bool Application::initialize() {
         return false;
     }
 
+    // Media Player
     _mediaPlayer = std::make_unique<MediaPlayer>();
     if (!_mediaPlayer->initialize(_window, VIDEO_WIDTH, VIDEO_HEIGHT)) {
         std::cerr << "Failed to initialize media player\n";
@@ -154,6 +155,41 @@ void Application::update() {
         }
     }
 
+    // OSD (Sensor)
+    if (_sensorSource) {
+        static auto lastSensorUpdate = std::chrono::steady_clock::now();
+        auto now = std::chrono::steady_clock::now();
+
+        // Update sensor data every 100ms
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(
+                now - lastSensorUpdate).count() >= 100) {
+
+            SensorData sensorData;
+            if (_sensorSource->getQueue().tryPop(sensorData)) {
+                _latestSensorData = sensorData;
+
+                // debug
+                /*std::cout << "Sensor data received - "
+                          << "Temp: " << _latestSensorData.temperature << "°C, "
+                          << "Humidity: " << _latestSensorData.humidity << "%, "
+                          << "Accel: " << _latestSensorData.acceleration << "g, "
+                          << "Source: " << _latestSensorData.source << std::endl;*/
+
+                _uiManager->updateOSDData(_mediaPlayer->getState(),
+                                          _mediaPlayer->getCodecInfo(),
+                                          _selectedFile,
+                                          _latestSensorData.temperature,
+                                          _latestSensorData.humidity,
+                                          _latestSensorData.acceleration,
+                                          _latestSensorData.source);
+            } else {
+                // debug
+                //std::cout << "No sensor data available in queue" << std::endl;
+            }
+
+            lastSensorUpdate = now;
+        }
+    }
     // OSD
     if (_uiManager && _mediaPlayer) {
         updateOSDData();
@@ -180,7 +216,17 @@ void Application::updateOSDData() {
     osdMediaState.totalDuration = duration;
 
     const auto codecInfo = _mediaPlayer->getCodecInfo();
-    _uiManager->updateOSDData(osdMediaState, codecInfo, _selectedFile);
+
+    // Sensor - Info
+    if (_sensorSource && _latestSensorData.source != "") {
+        _uiManager->updateOSDData(osdMediaState, codecInfo, _selectedFile,
+                                  _latestSensorData.temperature,
+                                  _latestSensorData.humidity,
+                                  _latestSensorData.acceleration,
+                                  _latestSensorData.source);
+    } else {
+        _uiManager->updateOSDData(osdMediaState, codecInfo, _selectedFile, 0.0, 0.0, 0.0, "No sensor data");
+    }
 }
 
 void Application::render() {
