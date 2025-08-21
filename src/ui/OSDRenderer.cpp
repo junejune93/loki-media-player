@@ -15,18 +15,18 @@ void OSDRenderer::render(const OSDState &state, int windowWidth, int windowHeigh
 
     setupOSDStyle(state.fadeAlpha);
 
-    if (state.showPlaybackInfo) {
-        renderPlaybackInfo(state);
-    }
+    // PLAY INFO
+    renderPlaybackInfo(state, windowWidth);
 
-    if (state.showStatusInfo) {
-        renderStatusInfo(state, windowWidth);
-    }
+    // CODEC INFO
+    renderCodecInfo(state, windowWidth, windowHeight);
 
-    if (state.showCodecInfo && !state.codecInfo.isEmpty()) {
-        renderCodecInfo(state, windowWidth, windowHeight);
-    }
+    // SENSOR INFO
+    renderSensorInfo(state, windowWidth, windowHeight);
 
+    // PLAYER STATUS
+    renderSyncInfo(state, windowWidth, windowHeight);
+    
     renderCenterStatus(state, windowWidth, windowHeight);
 
     restoreOSDStyle();
@@ -157,7 +157,7 @@ void OSDRenderer::renderSyncInfo(const OSDState &state, int windowWidth, int win
 void OSDRenderer::renderCodecInfo(const OSDState &state, int windowWidth, int windowHeight) {
     const float codecWindowWidth = 200.0f;
     const float codecWindowHeight = 170.0f;
-    const float startY = 140.0f; // 20 (padding) + 100 (playback info) + 20 (spacing)
+    const float startY = 140.0f;
     
     ImGui::SetNextWindowPos(ImVec2(20.0f, startY));
     ImGui::SetNextWindowSize(ImVec2(codecWindowWidth, codecWindowHeight));
