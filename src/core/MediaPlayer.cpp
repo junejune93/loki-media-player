@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../gl_common.h"
+#include "../media/FileVideoSource.h"
 #include "MediaPlayer.h"
 #include "Utils.h"
 
@@ -64,24 +65,24 @@ bool MediaPlayer::initializeShaders() {
 bool MediaPlayer::loadFile(const std::string &filename) {
     try {
         // Clean up existing decoder
-        if (_decoder) {
+        if (_source) {
             stop();
             _audioThread.reset();
-            _decoder.reset();
+            _source.reset();
         }
 
-        _decoder = std::make_unique<Decoder>(filename);
+        _source = std::make_unique<FileVideoSource>(filename);
         _state.currentFile = filename;
-        _state.totalDuration = _decoder->getDuration();
+        _state.totalDuration = _source->getDuration();
         _state.reset();
 
         // Initialize audio thread
         _audioThread = std::make_unique<AudioThread>(
-                _decoder->getAudioQueue(),
-                _decoder->getVideoQueue(),
+                _source->getAudioQueue(),
+                _source->getVideoQueue(),
                 *_audioPlayer,
                 *_syncManager,
-                *_decoder
+                *_source
         );
 
         _audioThread->start();
@@ -94,15 +95,15 @@ bool MediaPlayer::loadFile(const std::string &filename) {
 }
 
 void MediaPlayer::play() {
-    if (!_decoder) return;
+    if (!_source) return;
 
     if (!_state.isPlaying) {
-        _decoder->stop();
-        _decoder->getVideoQueue().clear();
-        _decoder->getAudioQueue().clear();
+        _source->stop();
+        _source->getVideoQueue().clear();
+        _source->getAudioQueue().clear();
         _syncManager->reset();
 
-        _decoder->start();
+        _source->start();
         _state.isPlaying = true;
         _state.isPaused = false;
 
@@ -129,10 +130,10 @@ void MediaPlayer::stop() {
     _state.isPlaying = false;
     _state.isPaused = false;
 
-    if (_decoder) {
-        _decoder->stop();
-        _decoder->getVideoQueue().clear();
-        _decoder->getAudioQueue().clear();
+    if (_source) {
+        _source->stop();
+        _source->getVideoQueue().clear();
+        _source->getAudioQueue().clear();
     }
 
     if (_audioThread) {
@@ -156,11 +157,11 @@ void MediaPlayer::seek(double time) {
 }
 
 void MediaPlayer::update() {
-    if (!_state.isPlaying || !_decoder) return;
+    if (!_state.isPlaying || !_source) return;
 
     auto now = std::chrono::steady_clock::now();
     if (now - _lastFrameTime >= TARGET_FRAME_TIME) {
-        auto &videoQueue = _decoder->getVideoQueue();
+        auto &videoQueue = _source->getVideoQueue();
 
         if (auto vfOpt = Utils::waitPopOpt(videoQueue, 5)) {
             auto &vf = *vfOpt;

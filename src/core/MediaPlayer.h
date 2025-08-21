@@ -5,7 +5,7 @@
 #include "../rendering/VideoFBO.h"
 #include "../rendering/ShaderProgram.h"
 #include "../threads/AudioThread.h"
-#include "../media/Decoder.h"
+#include "../media/interface/IVideoSource.h"
 #include "../media/VideoRenderer.h"
 #include "../media/AudioPlayer.h"
 #include "../media/SyncManager.h"
@@ -45,11 +45,11 @@ public:
     MediaState &getState() { return _state; }
 
     double getDuration() {
-        return _decoder != nullptr ? _decoder->getDuration() : 0.0;
+        return _source != nullptr ? _source->getDuration() : 0.0;
     }
 
     CodecInfo getCodecInfo() {
-        return _decoder != nullptr ? _decoder->getCodecInfo() : CodecInfo{};
+        return _source != nullptr ? _source->getCodecInfo() : CodecInfo{};
     }
 
 private:
@@ -59,7 +59,7 @@ private:
 
     bool initializeShaders();
 
-    std::unique_ptr<Decoder> _decoder;
+    std::unique_ptr<IVideoSource> _source;
     std::unique_ptr<VideoRenderer> _renderer;
     std::unique_ptr<AudioPlayer> _audioPlayer;
     std::unique_ptr<SyncManager> _syncManager;
