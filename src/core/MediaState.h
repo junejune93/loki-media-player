@@ -13,7 +13,6 @@ struct MediaState {
     double duration = 0.0;
     float playbackSpeed = 1.0f;
     float volume = 1.0f;
-    bool isBuffering = false;
     double audioVideoSyncOffset = 0.0;
 
     double getProgress() const {
