@@ -267,13 +267,8 @@ void Application::cleanup() {
         _mediaPlayer.reset();
     }
 
-    _controlPanel.reset();
-    _uiManager.reset();
-
-    if (ImGui::GetCurrentContext()) {
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
+    if (_uiManager) {
+        _uiManager->shutdown();
     }
 
     if (_window) {
