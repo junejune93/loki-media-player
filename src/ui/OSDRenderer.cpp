@@ -78,14 +78,31 @@ void OSDRenderer::handleInput(GLFWwindow *window, OSDState &state) {
     }
 }
 
-void OSDRenderer::renderPlaybackInfo(const OSDState &state) {
-    ImGui::SetNextWindowPos(ImVec2(20, 20));
+void OSDRenderer::renderPlaybackInfo(const OSDState &state, int windowWidth) {
+    const float windowHeight = 100.0f;
+    ImGui::SetNextWindowPos(ImVec2(20.0f, 20.0f));
+
+    // 파일명 길이에 따라 최소 너비 계산
+    float minWidth = 200.0f;
+    if (!state.fileName.empty()) {
+        ImVec2 textSize = ImGui::CalcTextSize(state.fileName.c_str());
+        minWidth = std::max(minWidth, textSize.x + 70.0f);
+    }
+
+    ImGui::SetNextWindowSize(ImVec2(minWidth, windowHeight));
     ImGui::Begin("##PlaybackInfo", nullptr,
                  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                  ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize |
                  ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
                  ImGuiWindowFlags_NoNav);
+
+    // HEADER
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
+    ImGui::TextColored(ImVec4(0.8f, 0.8f, 1.0f, 1.0f), "PLAY INFO");
+    ImGui::PopFont();
+
+    ImGui::Separator();
 
     if (!state.fileName.empty()) {
         ImGui::Text("[FILE] %s", state.fileName.c_str());
@@ -96,14 +113,23 @@ void OSDRenderer::renderPlaybackInfo(const OSDState &state) {
     ImGui::Text("[TIME] %s / %s", currentTimeStr.c_str(), totalTimeStr.c_str());
 
     ImGui::Text("[SPEED] %.1fx", state.playbackSpeed);
-
     ImGui::Text("[VOLUME] %.0f%%", state.volumeLevel * 100.0f);
 
     ImGui::End();
 }
 
-void OSDRenderer::renderStatusInfo(const OSDState &state, int windowWidth) {
-    ImGui::SetNextWindowPos(ImVec2((float) windowWidth - 200, 20));
+void OSDRenderer::renderSyncInfo(const OSDState &state, int windowWidth, int windowHeight) {
+    const float windowPadding = 20.0f;
+    const float sensorWindowHeight = 140.0f;
+    const float windowWidthPx = 250.0f;
+    const float windowHeightPx = 70.0f;
+    const float startY = windowPadding + sensorWindowHeight + 20.0f;
+
+    ImGui::SetNextWindowPos(ImVec2(
+            (float)windowWidth - windowWidthPx - windowPadding,
+            startY));
+
+    ImGui::SetNextWindowSize(ImVec2(windowWidthPx, windowHeightPx));
     ImGui::Begin("##StatusInfo", nullptr,
                  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
@@ -111,28 +137,44 @@ void OSDRenderer::renderStatusInfo(const OSDState &state, int windowWidth) {
                  ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
                  ImGuiWindowFlags_NoNav);
 
+    // HEADER
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
+    ImGui::TextColored(ImVec4(0.8f, 0.8f, 1.0f, 1.0f), "PLAYER STATUS");
+    ImGui::PopFont();
+
+    ImGui::Separator();
+
     const char *playIcon = state.isPlaying ? "[PAUSE]" : "[PLAY]";
     const char *playText = state.isPlaying ? "Playing" : "Paused";
     ImGui::Text("%s %s", playIcon, playText);
 
-    if (state.isBuffering) {
-        ImGui::Text("[BUFFER] Buffering...");
-    }
-
-    const char *syncIcon = (state.syncStatus == "Synced") ? "[SYNC]" : "[WARN]";
-    ImGui::Text("%s %s", syncIcon, state.syncStatus.c_str());
+    const char *syncIcon1 = (state.syncStatus == "Synced") ? "[SYNC]" : "[WARN]";
+    ImGui::Text("%s %s", syncIcon1, state.syncStatus.c_str());
 
     ImGui::End();
 }
 
 void OSDRenderer::renderCodecInfo(const OSDState &state, int windowWidth, int windowHeight) {
-    ImGui::SetNextWindowPos(ImVec2((float) windowWidth - 200, 100));
+    const float codecWindowWidth = 200.0f;
+    const float codecWindowHeight = 170.0f;
+    const float startY = 140.0f; // 20 (padding) + 100 (playback info) + 20 (spacing)
+    
+    ImGui::SetNextWindowPos(ImVec2(20.0f, startY));
+    ImGui::SetNextWindowSize(ImVec2(codecWindowWidth, codecWindowHeight));
+    
     ImGui::Begin("##CodecInfo", nullptr,
                  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                  ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize |
                  ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
                  ImGuiWindowFlags_NoNav);
+
+    // HEADER
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
+    ImGui::TextColored(ImVec4(0.8f, 0.8f, 1.0f, 1.0f), "CODEC INFO");
+    ImGui::PopFont();
+
+    ImGui::Separator();
 
     const auto &codec = state.codecInfo;
 
@@ -214,6 +256,52 @@ void OSDRenderer::setupOSDStyle(float alpha) {
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.7f * alpha));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, alpha));
     ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.3f, 0.3f, 0.3f, 0.5f * alpha));
+}
+
+void OSDRenderer::renderSensorInfo(const OSDState &state, int windowWidth, int windowHeight) {
+    const float sensorWindowWidth = 250.0f;
+    const float sensorWindowHeight = 145.0f;
+    const float startY = 20.0f;
+
+    ImGui::SetNextWindowPos(ImVec2(
+            (float)windowWidth - sensorWindowWidth - 20.0f,
+            startY
+    ));
+    ImGui::SetNextWindowSize(ImVec2(sensorWindowWidth, sensorWindowHeight));
+
+    ImGui::Begin("##SensorInfo", nullptr,
+                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize |
+                 ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
+                 ImGuiWindowFlags_NoNav);
+
+    // HEADER
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
+    ImGui::TextColored(ImVec4(0.8f, 0.8f, 1.0f, 1.0f), "SENSOR INFO");
+    ImGui::PopFont();
+
+    ImGui::Separator();
+
+    if (!state.sensorReadings.source.empty()) {
+        ImGui::Text("[SOURCE] %s", state.sensorReadings.source.c_str());
+    }
+
+    std::string updated = state.sensorReadings.getFormattedTimeSinceUpdate();
+    if (!updated.empty()) {
+        ImGui::Text("[UPDATED] %s", updated.c_str());
+    }
+
+    ImGui::Text("[TEMP] %.1f °C", state.sensorReadings.temperature);
+
+    ImGui::Text("[HUM] %.1f %%", state.sensorReadings.humidity);
+
+    ImGui::Text("[ACCEL] %.2f g", state.sensorReadings.acceleration);
+
+    float accelBar = std::min(1.0f, (float)state.sensorReadings.acceleration / 2.0f);
+    ImGui::ProgressBar(accelBar, ImVec2(-1, 20), "");
+
+    ImGui::End();
 }
 
 void OSDRenderer::restoreOSDStyle() {
