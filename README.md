@@ -63,50 +63,70 @@ sudo apt install libglfw3-dev libgl1-mesa-dev portaudio19-dev
 
 ## Project Structure
 ```
-loki_media_player/
-├── CMakeLists.txt              # CMake build configuration
-├── src/                        # Source files
-│   ├── core/                   # Core application logic
-│   │   ├── Application.cpp     # Main application class
-│   │   ├── Application.h       # Application header
-│   │   ├── MediaPlayer.cpp     # Media playback core logic
-│   │   ├── MediaPlayer.h       # MediaPlayer header
-│   │   ├── MediaState.h        # Playback state management
-│   │   ├── Utils.cpp           # Utility functions
-│   │   └── Utils.h             # Utility header
-│   ├── media/                  # Media processing
-│   │   ├── AudioFrame.h        # Audio frame structure
-│   │   ├── AudioPlayer.h       # Audio player interface
-│   │   ├── Decoder.cpp         # FFmpeg decoder implementation
-│   │   ├── Decoder.h           # FFmpeg decoder wrapper
-│   │   ├── SyncManager.h       # Audio/video synchronization
-│   │   ├── ThreadSafeQueue.h   # Thread-safe queue template
-│   │   ├── VideoFrame.h        # Video frame structure
-│   │   ├── VideoRenderer.cpp   # OpenGL video renderer implementation
-│   │   └── VideoRenderer.h     # OpenGL video renderer
-│   ├── rendering/              # OpenGL rendering system
-│   │   ├── RenderContext.cpp   # Rendering context implementation
-│   │   ├── RenderContext.h     # Rendering context
-│   │   ├── ShaderProgram.cpp   # Shader management implementation
-│   │   ├── ShaderProgram.h     # Shader program wrapper
-│   │   ├── VideoFBO.cpp        # Framebuffer object implementation
-│   │   └── VideoFBO.h          # Framebuffer object
-│   ├── threads/                # Multi-threading support
-│   │   ├── AudioThread.cpp     # Audio thread implementation
-│   │   └── AudioThread.h       # Audio thread management
-│   ├── ui/                     # User interface
-│   │   ├── ControlPanel.cpp    # Media control panel implementation
-│   │   ├── ControlPanel.h      # Control panel interface
-│   │   ├── FileSelector.cpp    # File selection dialog implementation
-│   │   ├── FileSelector.h      # File selector interface
-│   │   ├── OSDRenderer.cpp     # OSD Rendering implementation
-│   │   ├── OSDRenderer.h       # OSD Rendering
-│   │   ├── OSDState.h          # OSD state management
-│   │   ├── UIManager.cpp       # UI management implementation
-│   │   └── UIManager.h         # UI manager
-│   ├── gl_common.h             # OpenGL common headers
-│   └── main.cpp                # Program entry point
-└── README.md                   # Project documentation
+loki-media-player/
+├── assets/                                 # Resource files (csv, screenshot, media)
+│   └── sensor_data.csv                     # Sample sensor data for simulation
+├── src/            
+│   ├── core/                               # Core application logic
+│   │   ├── Application.cpp                 # Main application class and entry point
+│   │   ├── Application.h                   # Application header with main loop
+│   │   ├── MediaPlayer.cpp                 # Media playback core logic
+│   │   ├── MediaPlayer.h                   # MediaPlayer interface and implementation
+│   │   ├── MediaState.h                    # Playback state management
+│   │   ├── Utils.cpp                       # Utility functions
+│   │   └── Utils.h                         # Utility functions and macros
+│   │
+│   ├── media/                              # Media processing components
+│   │   ├── AudioFrame.h                    # Audio frame data structure
+│   │   ├── AudioPlayer.h                   # Audio playback interface
+│   │   ├── CodecInfo.h                     # Media codec information
+│   │   ├── Decoder.cpp                     # FFmpeg decoder implementation
+│   │   ├── Decoder.h                       # FFmpeg decoder wrapper
+│   │   ├── FileVideoSource.cpp             # File-based video source
+│   │   ├── FileVideoSource.h               # File source interface
+│   │   ├── NetworkStreamVideoSource.cpp    # Network stream source
+│   │   ├── NetworkStreamVideoSource.h      # Network source interface
+│   │   ├── SyncManager.h                   # Audio/video synchronization
+│   │   ├── ThreadSafeQueue.h               # Thread-safe queue implementation
+│   │   ├── VideoFrame.h                    # Video frame data structure
+│   │   ├── VideoRenderer.cpp               # OpenGL video renderer
+│   │   ├── VideoRenderer.h                 # Video rendering interface
+│   │   ├── WebcamVideoSource.h             # Webcam source interface
+│   │   └── interface/
+│   │       └── IVideoSource.h              # Video source interface
+│   │           
+│   ├── rendering/                          # OpenGL rendering system
+│   │   ├── RenderContext.cpp               # Rendering context management
+│   │   ├── RenderContext.h                 # Context interface
+│   │   ├── ShaderProgram.cpp               # Shader program management
+│   │   ├── ShaderProgram.h                 # Shader program wrapper
+│   │   ├── VideoFBO.cpp                    # Framebuffer object
+│   │   └── VideoFBO.h                      # FBO interface
+│   │           
+│   ├── sensors/                            # Sensor data handling
+│   │   ├── CsvSensorSource.cpp             # CSV-based sensor data source
+│   │   ├── CsvSensorSource.h               # CSV sensor source interface
+│   │   ├── SensorData.h                    # Sensor data structure
+│   │   └── interface/
+│   │       └── ISensorSource.h             # Base sensor source interface
+│   │
+│   ├── threads/                            # Multi-threading support
+│   │   ├── AudioThread.cpp                 # Audio thread implementation
+│   │   └── AudioThread.h                   # Audio thread management
+│   │
+│   └── ui/                                 # User interface components
+│       ├── ControlPanel.cpp                # Media control panel
+│       ├── ControlPanel.h                  # Control panel interface
+│       ├── FileSelector.cpp                # File selection dialog
+│       ├── FileSelector.h                  # File selector interface
+│       ├── OSDRenderer.cpp                 # On-Screen Display renderer
+│       ├── OSDRenderer.h                   # OSD rendering interface
+│       ├── OSDState.h                      # OSD state management
+│       ├── UIManager.cpp                   # UI management and rendering
+│       └── UIManager.h                     # UI manager interface
+│
+├── gl_common.h                             # OpenGL common headers
+└── main.cpp                                # Program entry point
 ```
 
 ---
