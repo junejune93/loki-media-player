@@ -2,10 +2,10 @@
 
 #include <string>
 #include <memory>
-#include "../media/ThreadSafeQueue.h"
-#include "../media/VideoFrame.h"
-#include "../media/AudioFrame.h"
-#include "../media/CodecInfo.h"
+#include "media/ThreadSafeQueue.h"
+#include "media/VideoFrame.h"
+#include "media/AudioFrame.h"
+#include "media/CodecInfo.h"
 
 class IVideoSource {
 public:
