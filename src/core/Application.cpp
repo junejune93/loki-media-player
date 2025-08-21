@@ -9,7 +9,7 @@
 Application::Application() {
     _videoFiles.clear();
     std::string assetsPath = "../assets/";
-    for (const auto& entry : std::filesystem::directory_iterator(assetsPath)) {
+    for (const auto &entry: std::filesystem::directory_iterator(assetsPath)) {
         if (entry.is_regular_file()) {
             _videoFiles.push_back(entry.path().string());
         }
