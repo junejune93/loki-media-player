@@ -38,6 +38,8 @@ ADD_EXECUTABLE(loki_media_player
         src/threads/AudioThread.cpp
         src/media/Decoder.cpp
         src/media/VideoRenderer.cpp
+        src/media/FileVideoSource.cpp
+        src/media/NetworkStreamVideoSource.cpp
         ${IMGUI_DIR}/imgui.cpp
         ${IMGUI_DIR}/imgui_draw.cpp
         ${IMGUI_DIR}/imgui_widgets.cpp
