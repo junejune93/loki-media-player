@@ -57,6 +57,7 @@ bool Application::initialize() {
         return false;
     }
 
+    // Media Control Panel
     _controlPanel = std::make_unique<ControlPanel>(VIDEO_WIDTH, CONTROLS_HEIGHT);
     setupUICallbacks();
 
@@ -190,6 +191,7 @@ void Application::update() {
             lastSensorUpdate = now;
         }
     }
+
     // OSD
     if (_uiManager && _mediaPlayer) {
         updateOSDData();
@@ -201,6 +203,7 @@ void Application::updateOSDData() {
         return;
     }
 
+    // Media Player - Info
     const auto mediaState = _mediaPlayer->getState();
 
     MediaState osdMediaState;
@@ -215,6 +218,7 @@ void Application::updateOSDData() {
     const auto duration = _mediaPlayer->getDuration();
     osdMediaState.totalDuration = duration;
 
+    // Codec - Info
     const auto codecInfo = _mediaPlayer->getCodecInfo();
 
     // Sensor - Info
