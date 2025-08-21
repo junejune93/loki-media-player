@@ -8,6 +8,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "sensors/interface/ISensorSource.h"
+#include "sensors/CsvSensorSource.h"
 
 class Application {
 public:
@@ -55,4 +57,8 @@ private:
     std::vector<std::string> _videoFiles;
     std::string _selectedFile;
     bool _fileLoaded = false;
+
+    // Sensor
+    std::unique_ptr<ISensorSource> _sensorSource;
+    SensorData _latestSensorData;
 };
