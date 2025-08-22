@@ -166,6 +166,6 @@ loki-media-player/
 ---
 
 ## License
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the GNU LGPL v2.1 or later - see the [LICENSE](LICENSE) file for details.
 
 ---
