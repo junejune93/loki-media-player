@@ -157,26 +157,43 @@ void MediaPlayer::seek(double time) {
 }
 
 void MediaPlayer::update() {
-    if (!_state.isPlaying || !_source) return;
+    if (!_source) {
+        return;
+    }
+
+    if (!_state.isPlaying) {
+        return;
+    }
 
     auto now = std::chrono::steady_clock::now();
     if (now - _lastFrameTime >= TARGET_FRAME_TIME) {
         auto &videoQueue = _source->getVideoQueue();
 
+        // 비디오 큐에서 프레임 추출
         if (auto vfOpt = Utils::waitPopOpt(videoQueue, 5)) {
-            auto &vf = *vfOpt;
-            if (!_syncManager->syncVideo(vf)) return;
+            auto vf = std::move(*vfOpt);
+            
+            if (!_syncManager->isInitialized()) {
+                _syncManager->initialize(vf.pts, vf.pts, 0);
+            }
 
+            _syncManager->setAudioClock(vf.pts);
+            
             _backFBO->bind();
-            glViewport(0, 0, _videoWidth, _videoHeight);
-            glClearColor(0, 0, 0, 1);
-            glClear(GL_COLOR_BUFFER_BIT);
+            try {
+                glViewport(0, 0, _videoWidth, _videoHeight);
+                glClearColor(0, 0, 0, 1);
+                glClear(GL_COLOR_BUFFER_BIT);
 
-            _renderer->renderFrame(vf);
+                _renderer->renderFrame(vf);
+                swapFrameBuffers();
+                _lastFrameTime = now;
+                
+                _state.currentTime = vf.pts;
+            } catch (const std::exception &e) {
+                std::cerr << "Error rendering frame: " << e.what() << std::endl;
+            }
             _backFBO->unbind();
-
-            swapFrameBuffers();
-            _lastFrameTime = now;
         }
     }
 
