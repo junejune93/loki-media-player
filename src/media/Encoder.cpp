@@ -185,42 +185,72 @@ bool Encoder::openOutputFile() {
     auto now = std::chrono::system_clock::now();
     auto now_time = std::chrono::system_clock::to_time_t(now);
     std::tm tm = *std::localtime(&now_time);
-    
+
     std::ostringstream ss;
-    ss << std::put_time(&tm, "%Y%m%d_%H%M%S") << "_part" << _currentSegment << ".mp4";
-    std::string outputPath = (_outputDir.back() == '/' ? _outputDir : _outputDir + "/") + ss.str();
-    
-    if (avformat_alloc_output_context2(&_fmtCtx, nullptr, nullptr, outputPath.c_str()) < 0) {
-        std::cerr << "Could not create output context" << std::endl;
+    ss << std::put_time(&tm, "%Y%m%d_%H%M%S") << "_part" << _currentSegment;
+
+    // Record 파일 확장자 결정
+    switch (_outputFormat) {
+        case OutputFormat::MP4: ss << ".mp4"; break;
+        case OutputFormat::MKV: ss << ".mkv"; break;
+        case OutputFormat::MOV: ss << ".mov"; break;
+        default: ss << ".mp4"; break;
+    }
+
+    std::string outputPath = _outputDir + ss.str();
+
+    // 포맷 문자열 설정
+    const char* formatName = nullptr;
+    switch (_outputFormat) {
+        case OutputFormat::MP4: formatName = "mp4"; break;
+        case OutputFormat::MKV: formatName = "matroska"; break;
+        case OutputFormat::MOV: formatName = "mov"; break;
+        default: formatName = "mp4"; break;
+    }
+
+    if (avformat_alloc_output_context2(&_fmtCtx, nullptr, formatName, outputPath.c_str()) < 0) {
+        return false;
+    }
+
+    if (!_fmtCtx) {
         return false;
     }
     
     AVStream* stream = avformat_new_stream(_fmtCtx, nullptr);
     if (!stream) {
-        std::cerr << "Failed to create output stream" << std::endl;
+        avformat_free_context(_fmtCtx);
+        _fmtCtx = nullptr;
         return false;
     }
     
     if (avcodec_parameters_from_context(stream->codecpar, _videoStream.enc) < 0) {
-        std::cerr << "Failed to copy codec parameters" << std::endl;
+        avformat_free_context(_fmtCtx);
+        _fmtCtx = nullptr;
         return false;
     }
-    
+
+    // 파일 열기
     if (!(_fmtCtx->oformat->flags & AVFMT_NOFILE)) {
         if (avio_open(&_fmtCtx->pb, outputPath.c_str(), AVIO_FLAG_WRITE) < 0) {
-            std::cerr << "Could not open output file " << outputPath << std::endl;
+            avformat_free_context(_fmtCtx);
+            _fmtCtx = nullptr;
             return false;
         }
     }
-    
+
+    // 헤더 쓰기
     if (avformat_write_header(_fmtCtx, nullptr) < 0) {
         std::cerr << "Error writing header" << std::endl;
+        if (!(_fmtCtx->oformat->flags & AVFMT_NOFILE)) {
+            avio_closep(&_fmtCtx->pb);
+        }
+        avformat_free_context(_fmtCtx);
+        _fmtCtx = nullptr;
         return false;
     }
     
     _videoStream.stream = stream;
-    _videoStream.nextPts = 0;
-    
+
     std::cout << "Started new segment: " << outputPath << std::endl;
     return true;
 }
@@ -244,9 +274,15 @@ void Encoder::closeOutputFile() {
 }
 
 void Encoder::startNewSegment() {
-    std::lock_guard<std::mutex> lock(_mutex);
-    closeOutputFile();
-    openOutputFile();
+    if (_fmtCtx) {
+        closeOutputFile();
+    }
+
+    const auto success = openOutputFile();
+    if (!success) {
+        return;
+    }
+
     _segmentStartPts = _videoStream.nextPts;
 }
 
@@ -256,11 +292,20 @@ void Encoder::encodeFrame(const VideoFrame& frame) {
     }
     
     std::lock_guard<std::mutex> lock(_mutex);
-    
-    if (!_fmtCtx || (_videoStream.nextPts - _segmentStartPts) >= _segmentDuration * _fps) {
+
+    // 최초 프레임 또는 세그먼트 시간 초과
+    bool needNewSegment = !_fmtCtx || (_videoStream.nextPts - _segmentStartPts) >= _segmentDuration * _fps;
+    if (needNewSegment) {
+        std::cout << "Need new segment. Current PTS: " << _videoStream.nextPts
+                  << ", Segment start PTS: " << _segmentStartPts
+                  << ", Duration threshold: " << (_segmentDuration * _fps) << std::endl;
         startNewSegment();
     }
-    
+
+    if (!_fmtCtx) {
+        return;
+    }
+
     if (!_frame->data[0]) {
         _frame->format = AV_PIX_FMT_YUV420P;
         _frame->width = _width;
@@ -291,13 +336,17 @@ void Encoder::encodeFrame(const VideoFrame& frame) {
             std::cerr << "Error during encoding" << std::endl;
             break;
         }
-        
-        // Write
+
+        // PTS 조정
         av_packet_rescale_ts(_pkt, _videoStream.enc->time_base, _videoStream.stream->time_base);
         _pkt->stream_index = _videoStream.stream->index;
-        
-        if (av_interleaved_write_frame(_fmtCtx, _pkt) < 0) {
-            std::cerr << "Error writing packet" << std::endl;
+
+        // 패킷 쓰기
+        ret = av_interleaved_write_frame(_fmtCtx, _pkt);
+        if (ret < 0) {
+            char errbuf[AV_ERROR_MAX_STRING_SIZE];
+            av_strerror(ret, errbuf, AV_ERROR_MAX_STRING_SIZE);
+            std::cerr << "Error writing packet: " << errbuf << std::endl;
         }
         
         av_packet_unref(_pkt);
