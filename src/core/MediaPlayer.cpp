@@ -195,16 +195,8 @@ void MediaPlayer::update() {
                 _state.currentTime = vf.pts;
                 
                 // Set Record Queue
-                if (_isRecording) {
-                    std::vector<uint8_t> frameData = _backFBO->readPixels();
-                    if (!frameData.empty()) {
-                        _recordingQueue.push(VideoFrame(
-                            _videoWidth,
-                            _videoHeight,
-                            vf.pts,
-                            std::move(frameData)
-                        ));
-                    }
+                if (_isRecording && _source) {
+                    _source->encodeFrame(vf);
                 }
             } catch (const std::exception &e) {
                 std::cerr << "Error rendering frame: " << e.what() << std::endl;
@@ -241,77 +233,25 @@ void MediaPlayer::swapFrameBuffers() {
 }
 
 bool MediaPlayer::startRecording(const std::string& outputDir) {
-    if (_isRecording) {
+    if (_isRecording || !_source) {
         return false;
     }
 
     try {
-        // 저장 정책: 180초 (3분), 30 FPS
-        int fps = 30;
-
-        // 인코더 생성 및 초기화
-        fs::create_directories(outputDir);
-        _encoder = std::make_unique<Encoder>(outputDir, 180, Encoder::OutputFormat::MP4);
-        if (!_encoder->initialize(_videoWidth, _videoHeight, fps, AV_PIX_FMT_RGBA)) {
-            _encoder.reset();
-            return false;
-        }
-
-        if (_source) {
-            auto codecInfo = _source->getCodecInfo();
-            if (!codecInfo.videoResolution.empty()) {
-                size_t xPos = codecInfo.videoResolution.find('x');
-                if (xPos != std::string::npos) {
-                    fps = 30;
-                }
-            }
-        }
-        
-        _stopRecording = false;
-        _isRecording = true;
-        
         // Record 버튼 변경
         if (_onRecordingStateChanged) {
             _onRecordingStateChanged(true);
         }
-        
-        _recordingThread = std::thread([this]() {
-            VideoFrame frame;
-            while (true) {
-                if (_stopRecording.load(std::memory_order_acquire)) {
-                    break;
-                }
-                
-                if (_recordingQueue.waitPop(frame, 100)) {
-                    std::unique_lock<std::mutex> encoderLock(_encoderMutex);
-                    if (!_encoder) {
-                        continue;
-                    }
-                    
-                    try {
-                        VideoFrame localFrame = std::move(frame);
-                
-                        encoderLock.unlock();
-                
-                        // 인코딩
-                        if (!localFrame.data.empty()) {
-                            _encoder->encodeFrame(localFrame);
-                        }
-                        
-                    } catch (const std::exception& e) {
-                    }
-                }
-                
-                std::this_thread::yield();
-            }
-        });
-        
+
+        // Record
+        _isRecording = true;
+        _source->startRecord();
+
         std::cout << "Recording started. Output directory: " << outputDir << std::endl;
         return true;
         
     } catch (const std::exception& e) {
         _isRecording = false;
-        _encoder.reset();
         if (_onRecordingStateChanged) {
             _onRecordingStateChanged(false);
         }
@@ -321,47 +261,13 @@ bool MediaPlayer::startRecording(const std::string& outputDir) {
 
 void MediaPlayer::stopRecording() {
     bool wasRecording = _isRecording.exchange(false);
-    if (!wasRecording) {
+    if (!wasRecording || !_source) {
         return;
     }
-    
-    _stopRecording = true;
-    _recordingQueue.clear();
 
-    // Record 스레드 종료
-    if (_recordingThread.joinable()) {
-        if (_recordingThread.get_id() != std::this_thread::get_id()) {
-            if (_recordingThread.joinable()) {
-                _recordingThread.join();
-            }
-        } else {
-            _recordingThread.detach();
-        }
-    }
+    _source->stopRecord();
 
-    // 인코더 종료
-    std::unique_ptr<Encoder> encoderToFinalize;
-    {
-        std::lock_guard<std::mutex> lock(_encoderMutex);
-        if (_encoder) {
-            encoderToFinalize = std::move(_encoder);
-        }
-    }
-    
-    if (encoderToFinalize) {
-        try {
-            encoderToFinalize->finalize();
-        } catch (const std::exception& e) {
-            std::cerr << "Error finalizing encoder: " << e.what() << std::endl;
-        }
-    }
-    
-    // 자원 해제
-    _recordingQueue.clear();
-    _stopRecording = false;
 
-    std::cout << "Recording stopped" << std::endl;
-    
     // Record 버튼 변경
     if (_onRecordingStateChanged) {
         _onRecordingStateChanged(false);

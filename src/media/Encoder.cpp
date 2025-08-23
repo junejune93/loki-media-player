@@ -143,50 +143,88 @@ bool Encoder::convertFrame(const VideoFrame& frame, AVFrame* dstFrame) {
     if (!dstFrame || frame.data.empty()) {
         return false;
     }
-    
+
     if (dstFrame->data[0] == nullptr) {
         dstFrame->format = AV_PIX_FMT_YUV420P;
-        dstFrame->width = _width;
-        dstFrame->height = _height;
-        
+        dstFrame->width = frame.width;
+        dstFrame->height = frame.height;
+
         if (av_frame_get_buffer(dstFrame, 32) < 0) {
             std::cerr << "Could not allocate frame data" << std::endl;
             return false;
         }
     }
-    
-    if (_inputFormat == AV_PIX_FMT_YUV420P && frame.width == _width && frame.height == _height) {
-        size_t y_size = _width * _height;
-        size_t uv_size = y_size / 4;
-        
-        if (frame.data.size() >= y_size + 2 * uv_size) {
-            // Y
-            std::memcpy(dstFrame->data[0], frame.data.data(), y_size);
-            // UV
-            std::memcpy(dstFrame->data[1], frame.data.data() + y_size, uv_size);
-            std::memcpy(dstFrame->data[2], frame.data.data() + y_size + uv_size, uv_size);
-            return true;
+
+    const auto rgb_size = frame.width * frame.height * 3;
+    const auto rgba_size = frame.width * frame.height * 4;
+    const auto yuv420p_size = frame.width * frame.height * 3 / 2;
+
+    if (frame.data.size() == rgba_size) {
+        if (!_swsCtx) {
+            _swsCtx = sws_getContext(frame.width, frame.height, AV_PIX_FMT_RGBA, dstFrame->width, dstFrame->height,
+                                     AV_PIX_FMT_YUV420P, SWS_BICUBIC, nullptr, nullptr, nullptr);
+
+            if (!_swsCtx) {
+                return false;
+            }
         }
-        return false;
-    }
-    
-    if (!_swsCtx) {
-        _swsCtx = sws_getContext(_width, _height, _inputFormat,
-                                 _width, _height, AV_PIX_FMT_YUV420P,
-                                 SWS_BICUBIC, nullptr, nullptr, nullptr);
+
+        const uint8_t *srcData[1] = {frame.data.data()};
+        int srcLinesize[1] = {frame.width * 4}; // RGBA
+
+        sws_scale(_swsCtx, srcData, srcLinesize, 0, frame.height, dstFrame->data, dstFrame->linesize);
+
+        return true;
+    } else if (frame.data.size() == rgb_size) {
+        if (_swsCtx) {
+            sws_freeContext(_swsCtx);
+            _swsCtx = nullptr;
+        }
+
+        int flags = SWS_BICUBIC | SWS_ACCURATE_RND | SWS_FULL_CHR_H_INT;
+        _swsCtx = sws_getContext(frame.width, frame.height, AV_PIX_FMT_RGB24, frame.width, frame.height,
+                                 AV_PIX_FMT_YUV420P, flags, nullptr, nullptr, nullptr);
 
         if (!_swsCtx) {
             return false;
         }
+
+        av_frame_unref(dstFrame);
+        dstFrame->format = AV_PIX_FMT_YUV420P;
+        dstFrame->width = frame.width;
+        dstFrame->height = frame.height;
+
+        if (av_frame_get_buffer(dstFrame, 32) < 0) {
+            return false;
+        }
+
+        const uint8_t *srcData[1] = {frame.data.data()};
+        int srcLinesize[1] = {static_cast<int>(frame.width * 3)};
+
+        int result = sws_scale(_swsCtx, srcData, srcLinesize, 0, frame.height, dstFrame->data, dstFrame->linesize);
+
+        if (result <= 0) {
+            return false;
+        }
+
+        dstFrame->pts =
+                static_cast<int64_t>(frame.pts * _videoStream.enc->time_base.den / _videoStream.enc->time_base.num);
+
+        return true;
+    } else if (frame.data.size() == yuv420p_size) {
+        size_t y_size = frame.width * frame.height;
+        size_t uv_size = y_size / 4;
+
+        // Y
+        memcpy(dstFrame->data[0], frame.data.data(), y_size);
+        // UV
+        memcpy(dstFrame->data[1], frame.data.data() + y_size, uv_size);
+        memcpy(dstFrame->data[2], frame.data.data() + y_size + uv_size, uv_size);
+
+        return true;
     }
-    
-    const uint8_t* srcData[1] = {frame.data.data()};
-    int srcLinesize[1] = {frame.width * 4}; // RGBA
-    
-    sws_scale(_swsCtx, srcData, srcLinesize, 0, _height,
-              dstFrame->data, dstFrame->linesize);
-    
-    return true;
+
+    return false;
 }
 
 bool Encoder::openOutputFile() {
@@ -308,9 +346,17 @@ void Encoder::encodeFrame(const VideoFrame& frame) {
                   << ", Segment start PTS: " << _segmentStartPts
                   << ", Duration threshold: " << (_segmentDuration * _fps) << std::endl;
         startNewSegment();
+
+        if (!_fmtCtx) {
+            return;
+        }
+
+        if (!_videoStream.stream) {
+            return;
+        }
     }
 
-    if (!_fmtCtx) {
+    if (!_videoStream.enc) {
         return;
     }
 
@@ -345,6 +391,11 @@ void Encoder::encodeFrame(const VideoFrame& frame) {
             break;
         }
 
+        if (!_videoStream.stream) {
+            av_packet_unref(_pkt);
+            break;
+        }
+
         // PTS 조정
         av_packet_rescale_ts(_pkt, _videoStream.enc->time_base, _videoStream.stream->time_base);
         _pkt->stream_index = _videoStream.stream->index;
@@ -359,7 +410,7 @@ void Encoder::encodeFrame(const VideoFrame& frame) {
         
         av_packet_unref(_pkt);
     }
-    
+
     _frameCounter++;
 }
 

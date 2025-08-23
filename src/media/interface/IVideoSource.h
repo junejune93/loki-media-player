@@ -30,4 +30,6 @@ public:
     virtual ThreadSafeQueue<VideoFrame> &getVideoQueue() = 0;
 
     virtual ThreadSafeQueue<AudioFrame> &getAudioQueue() = 0;
+
+    virtual void encodeFrame(const VideoFrame &frame) = 0;
 };

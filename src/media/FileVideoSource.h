@@ -34,6 +34,8 @@ public:
 
     Decoder &decoder();
 
+    void encodeFrame(const VideoFrame &frame) override;
+
 private:
     std::unique_ptr<Decoder> _decoder;
     std::unique_ptr<Encoder> _encoder;

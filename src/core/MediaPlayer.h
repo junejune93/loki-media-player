@@ -96,13 +96,6 @@ private:
     int _videoHeight = 0;
 
     // Record
-    std::unique_ptr<Encoder> _encoder;
-    std::thread _recordingThread;
-    ThreadSafeQueue<VideoFrame> _recordingQueue;
-    std::mutex _encoderMutex;
     std::atomic<bool> _isRecording{false};
-    std::atomic<bool> _stopRecording{false};
-    std::condition_variable _recordingCV;
-    VideoFrame _lastVideoFrame;
     std::function<void(bool)> _onRecordingStateChanged;
 };

@@ -1,4 +1,5 @@
 #include "FileVideoSource.h"
+#include <cstring>
 #include <filesystem>
 #include <iostream>
 
@@ -122,5 +123,45 @@ void FileVideoSource::stopRecord() {
         _encoder.reset();
         _isRecording = false;
         throw;
+    }
+}
+
+void FileVideoSource::encodeFrame(const VideoFrame &frame) {
+    if (!_isRecording || !_encoder) {
+        return;
+    }
+
+    try {
+        VideoFrame frameCopy = frame;
+
+        if (frameCopy.width <= 0 || frameCopy.height <= 0) {
+            return;
+        }
+
+        if (frameCopy.data.empty()) {
+            return;
+        }
+
+        size_t rgb_size = frameCopy.width * frameCopy.height * 3;
+        size_t rgba_size = frameCopy.width * frameCopy.height * 4;
+        size_t yuv420p_size = frameCopy.width * frameCopy.height * 3 / 2;
+
+        if (frameCopy.data.size() != rgb_size && frameCopy.data.size() != rgba_size &&
+            frameCopy.data.size() != yuv420p_size) {
+            return;
+        }
+
+        std::string formatName = "";
+        if (frameCopy.data.size() == rgba_size) {
+            formatName = "RGBA";
+        } else if (frameCopy.data.size() == rgb_size) {
+            formatName = "RGB";
+        } else if (frameCopy.data.size() == yuv420p_size) {
+            formatName = "YUV420P";
+        } else {
+            formatName = "UNKNOWN";
+        }
+        _encoder->encodeFrame(frameCopy);
+    } catch (const std::exception &e) {
     }
 }
