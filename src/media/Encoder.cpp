@@ -59,7 +59,7 @@ bool Encoder::initialize(int width, int height, int fps, AVPixelFormat inputForm
     _fps = fps;
     _inputFormat = inputFormat;
     
-    if (!setupCodec(width, height, fps, inputFormat)) {
+    if (!setupCodec(width, height, fps, false, inputFormat)) {
         std::cerr << "Failed to set up codec" << std::endl;
         return false;
     }
@@ -68,7 +68,7 @@ bool Encoder::initialize(int width, int height, int fps, AVPixelFormat inputForm
     return true;
 }
 
-bool Encoder::setupCodec(int width, int height, int fps, AVPixelFormat pixFmt) {
+bool Encoder::setupCodec(int width, int height, int fps, bool bframe, AVPixelFormat pixFmt) {
     const AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     if (!codec) {
         return false;
@@ -86,24 +86,32 @@ bool Encoder::setupCodec(int width, int height, int fps, AVPixelFormat pixFmt) {
     _videoStream.enc->time_base = (AVRational){1, fps};
     _videoStream.enc->framerate = (AVRational){fps, 1};
     _videoStream.enc->gop_size = fps * 2;
-    _videoStream.enc->max_b_frames = 2;
+    _videoStream.enc->max_b_frames = bframe ? 2 : 0;
     _videoStream.enc->pix_fmt = AV_PIX_FMT_YUV420P;
     
     av_opt_set(_videoStream.enc->priv_data, "preset", "slow", 0);
-    av_opt_set(_videoStream.enc->priv_data, "tune", "zerolatency", 0);
-    av_opt_set(_videoStream.enc->priv_data, "crf", "23", 0); // Quality/compression tradeoff (0-51, lower is better)
-    
+    av_opt_set(_videoStream.enc->priv_data, "crf", "23", 0);
     av_opt_set(_videoStream.enc->priv_data, "profile", "high", 0);
     av_opt_set(_videoStream.enc->priv_data, "level", "4.0", 0);
-    
+
+    if (bframe) {
+        av_opt_set(_videoStream.enc->priv_data, "bframes", "2", 0);
+        av_opt_set(_videoStream.enc->priv_data, "b-adapt", "1", 0);
+        av_opt_set(_videoStream.enc->priv_data, "b-pyramid", "normal", 0);
+    } else {
+        av_opt_set(_videoStream.enc->priv_data, "tune", "zerolatency", 0);
+        av_opt_set(_videoStream.enc->priv_data, "bframes", "0", 0);
+        av_opt_set(_videoStream.enc->priv_data, "b-adapt", "0", 0);
+        av_opt_set(_videoStream.enc->priv_data, "b-pyramid", "none", 0);
+    }
+
     if (avcodec_open2(_videoStream.enc, codec, nullptr) < 0) {
         std::cerr << "Could not open codec" << std::endl;
         return false;
     }
     
     if (pixFmt != AV_PIX_FMT_YUV420P) {
-        _swsCtx = sws_getContext(width, height, pixFmt,
-                                width, height, AV_PIX_FMT_YUV420P,
+        _swsCtx = sws_getContext(width, height, pixFmt, width, height, AV_PIX_FMT_YUV420P,
                                 SWS_BICUBIC, nullptr, nullptr, nullptr);
         if (!_swsCtx) {
             std::cerr << "Could not initialize the conversion context" << std::endl;

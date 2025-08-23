@@ -48,7 +48,7 @@ private:
         int64_t nextPts{0};
     };
 
-    bool setupCodec(int width, int height, int fps, AVPixelFormat inputFormat);
+    bool setupCodec(int width, int height, int fps, bool bframe, AVPixelFormat inputFormat);
     bool openOutputFile();
     void closeOutputFile();
     void startNewSegment();
