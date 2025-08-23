@@ -125,6 +125,32 @@ void Application::setupUICallbacks() {
     _controlPanel->setPauseCallback([this]() { _mediaPlayer->pause(); });
     _controlPanel->setStopCallback([this]() { _mediaPlayer->stop(); });
     _controlPanel->setSeekCallback([this](double time) { _mediaPlayer->seek(time); });
+    _controlPanel->setStartRecordingCallback([this]() -> bool {
+        std::string recordingsDir = "record";
+        if (!std::filesystem::exists(recordingsDir)) {
+            std::filesystem::create_directory(recordingsDir);
+        }
+        
+        auto now = std::chrono::system_clock::now();
+        auto in_time_t = std::chrono::system_clock::to_time_t(now);
+        std::stringstream ss;
+        ss << std::put_time(std::localtime(&in_time_t), "%Y%m%d_%H%M%S");
+        std::string filename = recordingsDir + "/record_" + ss.str() + ".mp4";
+        
+        const auto started = _mediaPlayer->startRecording(recordingsDir);
+        if (started) {
+            std::cout << "Started recording to: " << filename << std::endl;
+        }
+        return started;
+    });
+    
+    _controlPanel->setStopRecordingCallback([this]() {
+        _mediaPlayer->stopRecording();
+    });
+    
+    _mediaPlayer->setOnRecordingStateChanged([this](bool isRecording) {
+        _controlPanel->setRecordingState(isRecording);
+    });
 }
 
 void Application::run() {
