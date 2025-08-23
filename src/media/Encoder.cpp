@@ -1,0 +1,361 @@
+#include "Encoder.h"
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <chrono>
+#include <ctime>
+#include <cstring>
+#include <stdexcept>
+#include <utility>
+
+namespace fs = std::filesystem;
+
+using namespace std::chrono;
+
+Encoder::Encoder(std::string  outputDir, int segmentDuration, OutputFormat format)
+    : _outputDir(std::move(outputDir)),
+    _segmentDuration(segmentDuration),
+    _outputFormat(format) {
+    if (!_outputDir.empty() && _outputDir.back() != '/' && _outputDir.back() != '\\') {
+        _outputDir += fs::path::preferred_separator;
+    }
+    
+    fs::create_directories(_outputDir);
+    
+    _frame = av_frame_alloc();
+    _pkt = av_packet_alloc();
+    if (!_frame || !_pkt) {
+        throw std::runtime_error("Could not allocate frame or packet");
+    }
+    
+    _conversionBuffer.reserve(1920 * 1080 * 4 /* RGB+A */);
+}
+
+Encoder::~Encoder() {
+    finalize();
+    if (_frame) {
+        av_frame_free(&_frame);
+    }
+
+    if (_pkt) {
+        av_packet_free(&_pkt);
+    }
+
+    if (_swsCtx) {
+        sws_freeContext(_swsCtx);
+    }
+}
+
+bool Encoder::initialize(int width, int height, int fps, AVPixelFormat inputFormat) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    
+    if (width <= 0 || height <= 0 || fps <= 0) {
+        std::cerr << "Invalid video parameters" << std::endl;
+        return false;
+    }
+    
+    _width = width;
+    _height = height;
+    _fps = fps;
+    _inputFormat = inputFormat;
+    
+    if (!setupCodec(width, height, fps, inputFormat)) {
+        std::cerr << "Failed to set up codec" << std::endl;
+        return false;
+    }
+    
+    _initialized = true;
+    return true;
+}
+
+bool Encoder::setupCodec(int width, int height, int fps, AVPixelFormat pixFmt) {
+    const AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+    if (!codec) {
+        return false;
+    }
+    
+    _videoStream.enc = avcodec_alloc_context3(codec);
+    if (!_videoStream.enc) {
+        return false;
+    }
+    
+    _videoStream.enc->codec_id = AV_CODEC_ID_H264;
+    _videoStream.enc->bit_rate = 4000000;
+    _videoStream.enc->width = width;
+    _videoStream.enc->height = height;
+    _videoStream.enc->time_base = (AVRational){1, fps};
+    _videoStream.enc->framerate = (AVRational){fps, 1};
+    _videoStream.enc->gop_size = fps * 2;
+    _videoStream.enc->max_b_frames = 2;
+    _videoStream.enc->pix_fmt = AV_PIX_FMT_YUV420P;
+    
+    av_opt_set(_videoStream.enc->priv_data, "preset", "slow", 0);
+    av_opt_set(_videoStream.enc->priv_data, "tune", "zerolatency", 0);
+    av_opt_set(_videoStream.enc->priv_data, "crf", "23", 0); // Quality/compression tradeoff (0-51, lower is better)
+    
+    av_opt_set(_videoStream.enc->priv_data, "profile", "high", 0);
+    av_opt_set(_videoStream.enc->priv_data, "level", "4.0", 0);
+    
+    if (avcodec_open2(_videoStream.enc, codec, nullptr) < 0) {
+        std::cerr << "Could not open codec" << std::endl;
+        return false;
+    }
+    
+    if (pixFmt != AV_PIX_FMT_YUV420P) {
+        _swsCtx = sws_getContext(width, height, pixFmt,
+                                width, height, AV_PIX_FMT_YUV420P,
+                                SWS_BICUBIC, nullptr, nullptr, nullptr);
+        if (!_swsCtx) {
+            std::cerr << "Could not initialize the conversion context" << std::endl;
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+std::string Encoder::generateOutputFilename() const {
+    auto now = system_clock::now();
+    auto now_time = system_clock::to_time_t(now);
+    std::tm tm = *std::localtime(&now_time);
+    
+    std::ostringstream ss;
+    ss << std::put_time(&tm, "%Y%m%d_%H%M%S") << "_part" << _currentSegment;
+    
+    switch (_outputFormat) {
+        case OutputFormat::MP4: ss << ".mp4"; break;
+        case OutputFormat::MKV: ss << ".mkv"; break;
+        case OutputFormat::MOV: ss << ".mov"; break;
+    }
+    
+    return _outputDir + ss.str();
+}
+
+bool Encoder::convertFrame(const VideoFrame& frame, AVFrame* dstFrame) {
+    if (!dstFrame || frame.data.empty()) {
+        return false;
+    }
+    
+    if (dstFrame->data[0] == nullptr) {
+        dstFrame->format = AV_PIX_FMT_YUV420P;
+        dstFrame->width = _width;
+        dstFrame->height = _height;
+        
+        if (av_frame_get_buffer(dstFrame, 32) < 0) {
+            std::cerr << "Could not allocate frame data" << std::endl;
+            return false;
+        }
+    }
+    
+    if (_inputFormat == AV_PIX_FMT_YUV420P && frame.width == _width && frame.height == _height) {
+        size_t y_size = _width * _height;
+        size_t uv_size = y_size / 4;
+        
+        if (frame.data.size() >= y_size + 2 * uv_size) {
+            // Y
+            std::memcpy(dstFrame->data[0], frame.data.data(), y_size);
+            // UV
+            std::memcpy(dstFrame->data[1], frame.data.data() + y_size, uv_size);
+            std::memcpy(dstFrame->data[2], frame.data.data() + y_size + uv_size, uv_size);
+            return true;
+        }
+        return false;
+    }
+    
+    if (!_swsCtx) {
+        _swsCtx = sws_getContext(_width, _height, _inputFormat,
+                                 _width, _height, AV_PIX_FMT_YUV420P,
+                                 SWS_BICUBIC, nullptr, nullptr, nullptr);
+
+        if (!_swsCtx) {
+            return false;
+        }
+    }
+    
+    const uint8_t* srcData[1] = {frame.data.data()};
+    int srcLinesize[1] = {frame.width * 4}; // RGBA
+    
+    sws_scale(_swsCtx, srcData, srcLinesize, 0, _height,
+              dstFrame->data, dstFrame->linesize);
+    
+    return true;
+}
+
+bool Encoder::openOutputFile() {
+    auto now = std::chrono::system_clock::now();
+    auto now_time = std::chrono::system_clock::to_time_t(now);
+    std::tm tm = *std::localtime(&now_time);
+    
+    std::ostringstream ss;
+    ss << std::put_time(&tm, "%Y%m%d_%H%M%S") << "_part" << _currentSegment << ".mp4";
+    std::string outputPath = (_outputDir.back() == '/' ? _outputDir : _outputDir + "/") + ss.str();
+    
+    if (avformat_alloc_output_context2(&_fmtCtx, nullptr, nullptr, outputPath.c_str()) < 0) {
+        std::cerr << "Could not create output context" << std::endl;
+        return false;
+    }
+    
+    AVStream* stream = avformat_new_stream(_fmtCtx, nullptr);
+    if (!stream) {
+        std::cerr << "Failed to create output stream" << std::endl;
+        return false;
+    }
+    
+    if (avcodec_parameters_from_context(stream->codecpar, _videoStream.enc) < 0) {
+        std::cerr << "Failed to copy codec parameters" << std::endl;
+        return false;
+    }
+    
+    if (!(_fmtCtx->oformat->flags & AVFMT_NOFILE)) {
+        if (avio_open(&_fmtCtx->pb, outputPath.c_str(), AVIO_FLAG_WRITE) < 0) {
+            std::cerr << "Could not open output file " << outputPath << std::endl;
+            return false;
+        }
+    }
+    
+    if (avformat_write_header(_fmtCtx, nullptr) < 0) {
+        std::cerr << "Error writing header" << std::endl;
+        return false;
+    }
+    
+    _videoStream.stream = stream;
+    _videoStream.nextPts = 0;
+    
+    std::cout << "Started new segment: " << outputPath << std::endl;
+    return true;
+}
+
+void Encoder::closeOutputFile() {
+    if (!_fmtCtx) {
+        return;
+    }
+    
+    av_write_trailer(_fmtCtx);
+    
+    if (!(_fmtCtx->oformat->flags & AVFMT_NOFILE)) {
+        avio_closep(&_fmtCtx->pb);
+    }
+    
+    avformat_free_context(_fmtCtx);
+    _fmtCtx = nullptr;
+    _videoStream.stream = nullptr;
+    
+    _currentSegment++;
+}
+
+void Encoder::startNewSegment() {
+    std::lock_guard<std::mutex> lock(_mutex);
+    closeOutputFile();
+    openOutputFile();
+    _segmentStartPts = _videoStream.nextPts;
+}
+
+void Encoder::encodeFrame(const VideoFrame& frame) {
+    if (!_initialized) {
+        return;
+    }
+    
+    std::lock_guard<std::mutex> lock(_mutex);
+    
+    if (!_fmtCtx || (_videoStream.nextPts - _segmentStartPts) >= _segmentDuration * _fps) {
+        startNewSegment();
+    }
+    
+    if (!_frame->data[0]) {
+        _frame->format = AV_PIX_FMT_YUV420P;
+        _frame->width = _width;
+        _frame->height = _height;
+        if (av_frame_get_buffer(_frame, 32) < 0) {
+            std::cerr << "Could not allocate frame data" << std::endl;
+            return;
+        }
+    }
+    
+    if (!convertFrame(frame, _frame)) {
+        return;
+    }
+    
+    _frame->pts = _videoStream.nextPts++;
+    _frame->pkt_dts = _frame->pts;
+    
+    int ret = avcodec_send_frame(_videoStream.enc, _frame);
+    if (ret < 0) {
+        return;
+    }
+    
+    while (true) {
+        ret = avcodec_receive_packet(_videoStream.enc, _pkt);
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+            break;
+        } else if (ret < 0) {
+            std::cerr << "Error during encoding" << std::endl;
+            break;
+        }
+        
+        // Write
+        av_packet_rescale_ts(_pkt, _videoStream.enc->time_base, _videoStream.stream->time_base);
+        _pkt->stream_index = _videoStream.stream->index;
+        
+        if (av_interleaved_write_frame(_fmtCtx, _pkt) < 0) {
+            std::cerr << "Error writing packet" << std::endl;
+        }
+        
+        av_packet_unref(_pkt);
+    }
+    
+    _frameCounter++;
+}
+
+void Encoder::finalize() {
+    if (!_initialized) {
+        return;
+    }
+    
+    std::lock_guard<std::mutex> lock(_mutex);
+    
+    try {
+        if (_videoStream.enc) {
+            avcodec_send_frame(_videoStream.enc, nullptr);
+            
+            // Get remaining packets
+            while (true) {
+                int ret = avcodec_receive_packet(_videoStream.enc, _pkt);
+                if (ret == AVERROR_EOF || ret == AVERROR(EAGAIN)) {
+                    break;
+                } else if (ret < 0) {
+                    std::cerr << "Error flushing encoder" << std::endl;
+                    break;
+                }
+                
+                // Write remaining packets
+                if (_fmtCtx && _videoStream.stream) {
+                    av_packet_rescale_ts(_pkt, _videoStream.enc->time_base, _videoStream.stream->time_base);
+                    _pkt->stream_index = _videoStream.stream->index;
+                    
+                    if (av_interleaved_write_frame(_fmtCtx, _pkt) < 0) {
+                        std::cerr << "Error writing packet during finalize" << std::endl;
+                    }
+                }
+                
+                av_packet_unref(_pkt);
+            }
+        }
+        
+        closeOutputFile();
+        
+        if (_videoStream.enc) {
+            avcodec_free_context(&_videoStream.enc);
+            _videoStream.enc = nullptr;
+        }
+        
+        if (_swsCtx) {
+            sws_freeContext(_swsCtx);
+            _swsCtx = nullptr;
+        }
+
+        _initialized = false;
+        std::cout << "Encoder finalized. Total frames encoded: " << _frameCounter << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Error in Encoder::finalize: " << e.what() << std::endl;
+    }
+}
