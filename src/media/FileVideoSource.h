@@ -1,8 +1,10 @@
 #pragma once
 
-#include "media/interface/IVideoSource.h"
-#include "Decoder.h"
 #include <memory>
+#include <string>
+#include "Decoder.h"
+#include "Encoder.h"
+#include "media/interface/IVideoSource.h"
 
 class FileVideoSource : public IVideoSource {
 public:
@@ -13,6 +15,10 @@ public:
     void start() override;
 
     void stop() override;
+
+    void startRecord() override;
+
+    void stopRecord() override;
 
     void flush() override;
 
@@ -30,4 +36,7 @@ public:
 
 private:
     std::unique_ptr<Decoder> _decoder;
+    std::unique_ptr<Encoder> _encoder;
+    std::string _outputDir;
+    bool _isRecording{false};
 };

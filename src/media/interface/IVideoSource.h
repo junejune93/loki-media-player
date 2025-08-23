@@ -15,6 +15,10 @@ public:
 
     virtual void stop() = 0;
 
+    virtual void startRecord() = 0;
+
+    virtual void stopRecord() = 0;
+
     virtual void flush() = 0;
 
     virtual bool seek(double timeInSeconds) = 0;
