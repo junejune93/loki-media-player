@@ -58,7 +58,7 @@ void ControlPanel::renderControlButtons(const MediaState &state) {
     const float buttonWidth = 60.0f;
     const float buttonHeight = 35.0f;
     const float spacing = 15.0f;
-    const int numButtons = 3;
+    const int numButtons = 5;
     float totalWidth = buttonWidth * numButtons + spacing * (numButtons - 1);
     float startX = (static_cast<float>(_videoWidth) - totalWidth) * 0.5f;
 
