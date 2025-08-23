@@ -8,7 +8,7 @@ MEDIA_DIR="/path/to/media"
 LOGS_DIR="/path/to/logs"
 IMAGE_NAME="loki-media-player:latest"
 
-docker run -it --rm \
+sudo docker run -it --rm \
     --net=host \
     --privileged \
     -e DISPLAY=$DISPLAY \
