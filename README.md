@@ -7,6 +7,7 @@
 - Real-time audio/video synchronization with advanced timing control
 - Designed for end-to-end solution
 - Designed for Docker-based execution (easy deployment and isolation)
+- <span style="color:deepskyblue; font-weight:bold">Requires a sample media file (`assets/sample.mp4`) to be present for execution</span>
 
 ---
 
@@ -16,18 +17,18 @@
 ---
 
 ## Features
-- Multi-format Support: Supports all major video/audio formats via FFmpeg (MP4, MOV, AVI, MKV, etc.)
-- Hardware Acceleration: OpenGL-based video rendering for smooth performance
-- Cross-platform Windowing: GLFW + GLEW for high-performance graphics context management
-- UI/UX: ImGui-based UI with control panel, file selector, and **OSD**(on-screen display)
-- Real-time Synchronization: Advanced audio/video sync with adaptive timing control
-- Multi-threaded Architecture: Separate threads for decoding, audio, and video rendering
-- Memory Management: Smart buffering with queue size limits to prevent memory overflow
-- Cross-platform Audio: PortAudio-based audio playback with callback-driven architecture
-- Frame Rate Control: Adaptive frame rate limiting to reduce CPU usage
-- Thread-safe Queues: Lock-free communication between decoder and players
-- Video Effects & Shaders: Custom shader support for video post-processing
-- Sensor Integration: CSV-based sensor data input for adaptive behavior or analytics
+- Multi-format Support: Supports all major video/audio formats via <span style="color:deepskyblue; font-weight:bold">FFmpeg (MP4, MOV, AVI, MKV, etc.)</span>
+- Hardware Acceleration: <span style="color:deepskyblue; font-weight:bold">OpenGL-based</span> video rendering for smooth performance
+- Cross-platform Windowing: <span style="color:deepskyblue; font-weight:bold">GLFW + GLEW</span> for high-performance graphics context management
+- UI/UX: ImGui-based UI with control panel, file selector, and <span style="color:deepskyblue; font-weight:bold">OSD</span> (on-screen display)
+- Real-time Synchronization: Advanced audio/video sync with <span style="color:deepskyblue; font-weight:bold">adaptive timing control</span>
+- Multi-threaded Architecture: Separate threads for <span style="color:deepskyblue; font-weight:bold">decoding, audio, and video rendering</span>
+- Memory Management: Smart buffering with <span style="color:deepskyblue; font-weight:bold">queue size limits</span> to prevent memory overflow
+- Cross-platform Audio: <span style="color:deepskyblue; font-weight:bold">PortAudio-based</span> audio playback with callback-driven architecture
+- Frame Rate Control: <span style="color:deepskyblue; font-weight:bold">Adaptive frame rate limiting</span> to reduce CPU usage
+- Thread-safe Queues: <span style="color:deepskyblue; font-weight:bold">Lock-free communication</span> between decoder and players
+- Video Effects & Shaders: <span style="color:deepskyblue; font-weight:bold">Custom shader support</span> for video post-processing
+- Sensor Integration: <span style="color:deepskyblue; font-weight:bold">CSV-based sensor data input</span> for adaptive behavior or analytics
 
 ---
 
