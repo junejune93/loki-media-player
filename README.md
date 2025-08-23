@@ -29,6 +29,8 @@
 - Thread-safe Queues: <span style="color:deepskyblue; font-weight:bold">Lock-free communication</span> between decoder and players
 - Video Effects & Shaders: <span style="color:deepskyblue; font-weight:bold">Custom shader support</span> for video post-processing
 - Sensor Integration: <span style="color:deepskyblue; font-weight:bold">CSV-based sensor data input</span> for adaptive behavior or analytics
+- Playback Control: <span style="color:deepskyblue; font-weight:bold">SEEK functionality</span> with precise frame-level navigation and timeline
+- Screen Recording: <span style="color:deepskyblue; font-weight:bold">MP4-based recording</span> with real-time screen capture and compression
 
 ---
 
