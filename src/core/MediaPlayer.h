@@ -12,9 +12,14 @@
 #include "../media/ThreadSafeQueue.h"
 #include "../media/VideoFrame.h"
 #include "../media/AudioFrame.h"
+#include "../media/Encoder.h"
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <chrono>
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <functional>
 
 class MediaPlayer {
 public:
@@ -33,6 +38,14 @@ public:
     void stop();
 
     void seek(double time);
+
+    bool startRecording(const std::string& outputDir);
+
+    void stopRecording();
+
+    bool isRecording() const { return _isRecording; }
+    
+    void setOnRecordingStateChanged(std::function<void(bool)> cb);
 
     // 비디오 프레임 업데이트
     void update();
@@ -78,4 +91,15 @@ private:
 
     int _videoWidth = 0;
     int _videoHeight = 0;
+
+    // Record
+    std::unique_ptr<Encoder> _encoder;
+    std::thread _recordingThread;
+    ThreadSafeQueue<VideoFrame> _recordingQueue;
+    std::mutex _encoderMutex;
+    std::atomic<bool> _isRecording{false};
+    std::atomic<bool> _stopRecording{false};
+    std::condition_variable _recordingCV;
+    VideoFrame _lastVideoFrame;
+    std::function<void(bool)> _onRecordingStateChanged;
 };
