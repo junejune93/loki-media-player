@@ -5,7 +5,8 @@
 - Modern C++ multimedia player powered by FFmpeg and OpenGL
 - Cross-platform video and audio playback with hardware acceleration
 - Real-time audio/video synchronization with advanced timing control
-- Designed for MVP
+- Designed for end-to-end solution
+- Designed for Docker-based execution (easy deployment and isolation)
 
 ---
 
@@ -15,14 +16,18 @@
 ---
 
 ## Features
-- Multi-format Support**: Supports all major video/audio formats via FFmpeg (MP4, MOV, AVI, MKV, etc.)
-- Hardware Acceleration**: OpenGL-based video rendering for smooth performance
-- Real-time Synchronization**: Advanced audio/video sync with adaptive timing control
-- Multi-threaded Architecture**: Separate threads for decoding, audio, and video rendering
-- Memory Management**: Smart buffering with queue size limits to prevent memory overflow
-- Cross-platform Audio**: PortAudio-based audio playback with callback-driven architecture
-- Frame Rate Control**: Adaptive frame rate limiting to reduce CPU usage
-- Thread-safe Queues**: Lock-free communication between decoder and players
+- Multi-format Support: Supports all major video/audio formats via FFmpeg (MP4, MOV, AVI, MKV, etc.)
+- Hardware Acceleration: OpenGL-based video rendering for smooth performance
+- Cross-platform Windowing: GLFW + GLEW for high-performance graphics context management
+- UI/UX: ImGui-based UI with control panel, file selector, and **OSD**(on-screen display)
+- Real-time Synchronization: Advanced audio/video sync with adaptive timing control
+- Multi-threaded Architecture: Separate threads for decoding, audio, and video rendering
+- Memory Management: Smart buffering with queue size limits to prevent memory overflow
+- Cross-platform Audio: PortAudio-based audio playback with callback-driven architecture
+- Frame Rate Control: Adaptive frame rate limiting to reduce CPU usage
+- Thread-safe Queues: Lock-free communication between decoder and players
+- Video Effects & Shaders: Custom shader support for video post-processing
+- Sensor Integration: CSV-based sensor data input for adaptive behavior or analytics
 
 ---
 
@@ -32,16 +37,38 @@
 - Linux (Ubuntu 20.04 or later recommended)
 - Requires CMake 3.14 or later
 - Requires C++17 or later compiler
-- [FFmpeg](https://ffmpeg.org/) development libraries
-- [GLFW3](https://www.glfw.org/) for _window management
+- [FFmpeg](https://ffmpeg.org/) development libraries:
+  - libavformat
+  - libavcodec
+  - libavutil
+  - libswscale
+  - libswresample
+- [GLFW3](https://www.glfw.org/) for window management
+- [GLEW](http://glew.sourceforge.net/) for OpenGL extension handling
 - [PortAudio](http://www.portaudio.com/) for cross-platform audio
 - [OpenGL](https://www.opengl.org/) for hardware-accelerated rendering
+- [ImGui](https://github.com/ocornut/imgui) for GUI rendering (included as third-party)
 
 ---
 
 ## Build Instructions
 
-### Setup and Installation
+### Setup and Installation (Docker)
+```bash
+# Update package lists
+sudo apt-get update
+
+# Install Docker (Base)
+./build_loki_media_player_docker_base.sh
+
+# Install Docker (App)
+./build_loki_media_player_docker.sh
+
+# Excute Docker (App)
+./docker-run-loki-media-player.sh
+```
+
+### Setup and Installation (Local)
 ```bash
 # Update package lists
 sudo apt-get update
