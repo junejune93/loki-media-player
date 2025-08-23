@@ -2,6 +2,8 @@
 
 #include "../gl_common.h"
 #include <cstdint>
+#include <vector>
+#include <cstring>
 
 class VideoFBO {
 public:
@@ -22,6 +24,8 @@ public:
     int getWidth() const { return _width; }
 
     int getHeight() const { return _height; }
+
+    std::vector<uint8_t> readPixels(bool flip = true) const;
 
 private:
     GLuint _fbo = 0;

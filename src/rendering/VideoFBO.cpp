@@ -50,3 +50,26 @@ void VideoFBO::updateTexture(const uint8_t *frameData) const {
                     GL_RGB, GL_UNSIGNED_BYTE, frameData);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
+
+std::vector<uint8_t> VideoFBO::readPixels(bool flip) const {
+    // RGBA
+    const int bytesPerPixel = 4;
+    const int rowSize = _width * bytesPerPixel;
+    std::vector<uint8_t> pixels(_width * _height * bytesPerPixel);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+    glReadPixels(0, 0, _width, _height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    if (flip) {
+        // Flip (vertical)
+        std::vector<uint8_t> flippedPixels(_width * _height * bytesPerPixel);
+        for (int y = 0; y < _height; y++) {
+            const uint8_t* src = pixels.data() + (y * rowSize);
+            uint8_t* dst = flippedPixels.data() + ((_height - 1 - y) * rowSize);
+            std::memcpy(dst, src, rowSize);
+        }
+        return flippedPixels;
+    }
+    return pixels;
+}
