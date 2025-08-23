@@ -94,6 +94,14 @@ void ControlPanel::renderControlButtons(const MediaState &state) {
     }
 
     ImGui::SameLine(0, spacing);
+    if (ImGui::Button("10s>>", ImVec2(buttonWidth, buttonHeight))) {
+        double seekTime = std::min(state.totalDuration, state.currentTime + 10.0);
+        if (_onSeek) {
+            _onSeek(seekTime);
+        }
+    }
+
+    ImGui::SameLine(0, spacing);
     const char* recordLabel = _isRecording ? "Stop Record" : "Start Record";
     if (ImGui::Button(recordLabel, ImVec2(buttonWidth + 50, buttonHeight))) {
         if (_isRecording) {
