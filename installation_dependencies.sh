@@ -19,6 +19,14 @@ sudo apt install -y \
     libswresample-dev \
     libglfw3-dev \
     libgl1-mesa-dev \
-    portaudio19-dev
+    portaudio19-dev \
+    libglew-dev \
+    libxinerama-dev \
+    libxcursor-dev \
+    libxi-dev \
+    libxrandr-dev \
+    libxext-dev \
+    libx11-dev \
+    xorg-dev
 
 echo "All dependencies installed successfully!"
