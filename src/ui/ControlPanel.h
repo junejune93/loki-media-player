@@ -19,6 +19,15 @@ public:
 
     void setSeekCallback(std::function<void(double)> cb) { _onSeek = std::move(cb); }
 
+    void setWindowSize(int width, int height) {
+        _videoWidth = width;
+        _controlsHeight = height - (width * 720 / 1280);
+    }
+
+    void setStartRecordingCallback(std::function<bool()> cb) { _onStartRecording = std::move(cb); }
+    void setStopRecordingCallback(std::function<void()> cb) { _onStopRecording = std::move(cb); }
+    void setRecordingState(bool isRecording) { _isRecording = isRecording; }
+
 private:
     void renderProgressBar(MediaState &state);
 
@@ -29,8 +38,12 @@ private:
     int _videoWidth;
     int _controlsHeight;
 
+    bool _isRecording{false};
+
     std::function<void()> _onPlay;
     std::function<void()> _onPause;
     std::function<void()> _onStop;
     std::function<void(double)> _onSeek;
+    std::function<bool()> _onStartRecording;
+    std::function<void()> _onStopRecording;
 };

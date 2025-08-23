@@ -92,4 +92,18 @@ void ControlPanel::renderControlButtons(const MediaState &state) {
             _onSeek(seekTime);
         }
     }
+
+    ImGui::SameLine(0, spacing);
+    const char* recordLabel = _isRecording ? "Stop Record" : "Start Record";
+    if (ImGui::Button(recordLabel, ImVec2(buttonWidth + 50, buttonHeight))) {
+        if (_isRecording) {
+            if (_onStopRecording) {
+                _onStopRecording();
+            }
+        } else {
+            if (_onStartRecording) {
+                _isRecording = _onStartRecording();
+            }
+        }
+    }
 }

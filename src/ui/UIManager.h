@@ -46,6 +46,11 @@ public:
 
     void setWindowSize(int width, int height);
 
+    // Record
+    void setStartRecordingCallback(std::function<bool()> cb);
+    void setStopRecordingCallback(std::function<void()> cb);
+    void setRecordingState(bool isRecording);
+
 private:
     static void setupStyle();
 

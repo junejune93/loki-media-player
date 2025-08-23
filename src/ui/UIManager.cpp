@@ -149,8 +149,38 @@ void UIManager::setOSDVisible(bool visible) {
 }
 
 void UIManager::setWindowSize(int width, int height) {
+    if (_controlPanel) {
+        _controlPanel->setWindowSize(width, height);
+    }
     _windowWidth = width;
     _windowHeight = height;
+}
+
+void UIManager::setStartRecordingCallback(std::function<bool()> cb) {
+    if (_controlPanel) {
+        _controlPanel->setStartRecordingCallback([this, cb]() {
+            bool success = cb();
+            if (success) {
+                _controlPanel->setRecordingState(true);
+            }
+            return success;
+        });
+    }
+}
+
+void UIManager::setStopRecordingCallback(std::function<void()> cb) {
+    if (_controlPanel) {
+        _controlPanel->setStopRecordingCallback([this, cb]() {
+            cb();
+            _controlPanel->setRecordingState(false);
+        });
+    }
+}
+
+void UIManager::setRecordingState(bool isRecording) {
+    if (_controlPanel) {
+        _controlPanel->setRecordingState(isRecording);
+    }
 }
 
 void UIManager::shutdown() {
