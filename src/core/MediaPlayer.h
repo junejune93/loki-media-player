@@ -31,14 +31,17 @@ public:
 
     bool loadFile(const std::string &filename);
 
+    // Playback
     void play();
 
     void pause();
 
     void stop();
 
+    // Seek
     void seek(double time);
 
+    // Record
     bool startRecording(const std::string& outputDir);
 
     void stopRecording();
