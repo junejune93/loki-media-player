@@ -138,6 +138,12 @@ loki-media-player/
 │   │   ├── VideoFBO.cpp                    # Framebuffer object
 │   │   └── VideoFBO.h                      # FBO interface
 │   │           
+│   ├── report/                             # Report system
+│   │   ├── HttpReportSource.cpp            # Http Client source
+│   │   ├── HttpReportSource.h              # Http Client interface
+│   │   └── interface/
+│   │       └── IReportSource.h             # Report source interface
+│   │           
 │   ├── sensors/                            # Sensor data handling
 │   │   ├── CsvSensorSource.cpp             # CSV-based sensor data source
 │   │   ├── CsvSensorSource.h               # CSV sensor source interface
