@@ -21,6 +21,14 @@ FIND_PACKAGE(GLEW REQUIRED)
 
 # IMGUI
 SET(IMGUI_DIR ${CMAKE_SOURCE_DIR}/3rdparty/imgui)
+# cpprest-http-client-sdk
+SET(CPPREST_HTTP_CLIENT_SDK_DIR ${CMAKE_SOURCE_DIR}/3rdparty/cpprest-http-client-sdk)
+
+SET(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+SET(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+SET(SKIP_INSTALL_ALL ON CACHE BOOL "" FORCE)
+
+ADD_SUBDIRECTORY(${CPPREST_HTTP_CLIENT_SDK_DIR})
 
 # SOURCE
 ADD_EXECUTABLE(loki_media_player
@@ -74,6 +82,7 @@ TARGET_LINK_LIBRARIES(loki_media_player
         OpenGL::GL
         glfw
         GLEW::GLEW
+        cpprest-http-client-sdk
 )
 
 # COMPILE
