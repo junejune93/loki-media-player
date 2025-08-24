@@ -4,12 +4,13 @@
 #include "core/MediaPlayer.h"
 #include "ui/ControlPanel.h"
 #include "ui/UIManager.h"
+#include "report/interface/IReportSource.h"
+#include "sensors/interface/ISensorSource.h"
+#include "sensors/CsvSensorSource.h"
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <string>
 #include <vector>
-#include "sensors/interface/ISensorSource.h"
-#include "sensors/CsvSensorSource.h"
 
 class Application {
 public:
@@ -46,6 +47,7 @@ private:
     std::unique_ptr<MediaPlayer> _mediaPlayer;
     std::unique_ptr<ControlPanel> _controlPanel;
     std::unique_ptr<UIManager> _uiManager;
+    std::unique_ptr<IReportSource> _statusReporter;
 
     static constexpr int VIDEO_WIDTH = 1280;
     static constexpr int VIDEO_HEIGHT = 720;
@@ -61,4 +63,9 @@ private:
     // Sensor
     std::unique_ptr<ISensorSource> _sensorSource;
     SensorData _latestSensorData;
+
+    // Report
+    SensorStatus _sensorStatus{};
+    SyncStatus _syncStatus{};
+    std::vector<ChannelStatus> _channelStatus;
 };

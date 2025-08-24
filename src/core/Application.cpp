@@ -1,8 +1,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "Application.h"
-#include "core/Utils.h"
 #include "imgui.h"
+#include "report/HttpReportSource.h"
 #include <iostream>
 #include <filesystem>
 
@@ -36,6 +36,28 @@ bool Application::initialize() {
     }
 
     if (!initializeUI()) {
+        return false;
+    }
+
+    // Report - status
+    try {
+        _statusReporter = std::make_unique<HttpReportSource>("https://httpbin.org", "/post");
+        // values (TEST)
+        _channelStatus = {
+                // id, fps, queue_length
+            {0, 30, 5},
+            {1, 30, 3}
+        };
+        _syncStatus = {0.0, false};
+        _sensorStatus = {0.0, 0.0, 0.0};
+        
+        _statusReporter->updateChannelStatus(_channelStatus);
+        _statusReporter->updateSyncStatus(_syncStatus);
+        _statusReporter->updateSensorStatus(_sensorStatus);
+        _statusReporter->start();
+        spdlog::info("Status reporter initialized successfully");
+    } catch (const std::exception &e) {
+        spdlog::error("Failed to initialize status reporter: {}", e.what());
         return false;
     }
 
@@ -179,6 +201,20 @@ void Application::update() {
             _fileLoaded = true;
         }
     }
+    
+    // Report
+    if (_statusReporter) {
+        if (_mediaPlayer) {
+            auto state = _mediaPlayer->getState();
+            _channelStatus[0].fps = 30;
+            _channelStatus[0].queue_length = 0;
+            _statusReporter->updateChannelStatus(_channelStatus);
+            
+            _syncStatus.max_offset_ms = state.audioVideoSyncOffset * 1000.0; // ms
+            _syncStatus.locked = state.isPlaying && (std::abs(state.audioVideoSyncOffset) < 0.1);
+            _statusReporter->updateSyncStatus(_syncStatus);
+        }
+    }
 
     // OSD (Sensor)
     if (_sensorSource) {
@@ -193,23 +229,22 @@ void Application::update() {
             if (_sensorSource->getQueue().tryPop(sensorData)) {
                 _latestSensorData = sensorData;
 
-                // debug
-                /*std::cout << "Sensor data received - "
-                          << "Temp: " << _latestSensorData.temperature << "°C, "
-                          << "Humidity: " << _latestSensorData.humidity << "%, "
-                          << "Accel: " << _latestSensorData.acceleration << "g, "
-                          << "Source: " << _latestSensorData.source << std::endl;*/
+                // Update Report (Sensor)
+                if (_statusReporter) {
+                    _sensorStatus.temperature = _latestSensorData.temperature;
+                    _sensorStatus.humidity = _latestSensorData.humidity;
+                    _sensorStatus.acceleration = _latestSensorData.acceleration;
+                    _statusReporter->updateSensorStatus(_sensorStatus);
+                }
 
+                // Update UI (File Select, Codec Info, OSD)
                 _uiManager->updateOSDData(_mediaPlayer->getState(),
-                                          _mediaPlayer->getCodecInfo(),
-                                          _selectedFile,
-                                          _latestSensorData.temperature,
-                                          _latestSensorData.humidity,
-                                          _latestSensorData.acceleration,
-                                          _latestSensorData.source);
-            } else {
-                // debug
-                //std::cout << "No sensor data available in queue" << std::endl;
+                                        _mediaPlayer->getCodecInfo(),
+                                        _selectedFile,
+                                        _latestSensorData.temperature,
+                                        _latestSensorData.humidity,
+                                        _latestSensorData.acceleration,
+                                        _latestSensorData.source);
             }
 
             lastSensorUpdate = now;
@@ -288,6 +323,14 @@ void Application::render() {
 }
 
 void Application::cleanup() {
+    if (_statusReporter) {
+        _statusReporter->stop();
+    }
+    
+    if (_sensorSource) {
+        _sensorSource->stop();
+    }
+
     if (_mediaPlayer) {
         _mediaPlayer->stop();
         _mediaPlayer.reset();
