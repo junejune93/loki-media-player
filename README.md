@@ -31,6 +31,8 @@
 - Sensor Integration: <span style="color:deepskyblue; font-weight:bold">CSV-based sensor data input</span> for adaptive behavior or analytics
 - Playback Control: <span style="color:deepskyblue; font-weight:bold">SEEK functionality</span> with precise frame-level navigation and timeline
 - Screen Recording: <span style="color:deepskyblue; font-weight:bold">MP4-based recording</span> with real-time screen capture and compression
+- Status Reporting: HTTP-based reporting with connection pool for real-time channel, sensor, synchronization monitoring <span style="color:deepskyblue; font-weight:bold">at 20-second intervals</span>
+
 
 ---
 
