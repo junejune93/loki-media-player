@@ -43,6 +43,7 @@ ADD_EXECUTABLE(loki_media_player
         src/rendering/ShaderProgram.cpp
         src/rendering/RenderContext.cpp
         src/rendering/VideoFBO.cpp
+        src/report/HttpReportSource.cpp
         src/sensors/CsvSensorSource.cpp
         src/threads/AudioThread.cpp
         src/media/Decoder.cpp
