@@ -27,6 +27,12 @@ sudo apt install -y \
     libxrandr-dev \
     libxext-dev \
     libx11-dev \
-    xorg-dev
-
-echo "All dependencies installed successfully!"
+    xorg-dev \
+    libpaho-mqtt-dev \
+    libpaho-mqttpp-dev \
+    libssl-dev \
+    libcrypto++-dev \
+    git \
+    wget \
+    libstdc++6 \
+    libc6-dev \
