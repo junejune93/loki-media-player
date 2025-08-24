@@ -51,6 +51,7 @@
 - [PortAudio](http://www.portaudio.com/) for cross-platform audio
 - [OpenGL](https://www.opengl.org/) for hardware-accelerated rendering
 - [ImGui](https://github.com/ocornut/imgui) for GUI rendering (included as third-party)
+- [cpprest-http-client-sdk](https://github.com/loki2001-dev/cpprest-http-client-sdk) for HTTP Client SDK (included as third-party)
 
 ---
 
@@ -112,6 +113,8 @@ loki-media-player/
 │   │   ├── CodecInfo.h                     # Media codec information
 │   │   ├── Decoder.cpp                     # FFmpeg decoder implementation
 │   │   ├── Decoder.h                       # FFmpeg decoder wrapper
+│   │   ├── Encoder.cpp                     # FFmpeg Encoder implementation
+│   │   ├── Encoder.h                       # FFmpeg Encoder wrapper
 │   │   ├── FileVideoSource.cpp             # File-based video source
 │   │   ├── FileVideoSource.h               # File source interface
 │   │   ├── NetworkStreamVideoSource.cpp    # Network stream source
