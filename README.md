@@ -80,16 +80,10 @@ sudo apt-get update
 sudo apt-get update
 
 # Install dependencies
-sudo apt install build-essential cmake pkg-config
-
-# FFmpeg development libraries
-sudo apt install libavformat-dev libavcodec-dev libswscale-dev libswresample-dev libavutil-dev
-
-# Graphics and audio libraries
-sudo apt install libglfw3-dev libgl1-mesa-dev portaudio19-dev
+./installation_dependencies.sh
 
 # Build the project
-. build_project.sh
+./build_project.sh
 ```
 
 ---
