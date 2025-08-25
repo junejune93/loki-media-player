@@ -123,8 +123,8 @@ class GlobalState:
 # 전역 상태 인스턴스
 global_state = GlobalState()
 
-# MQTT 브로커 설정 (Using HiveMQ's public MQTT broker)
-MQTT_BROKER = os.getenv("MQTT_BROKER", "broker.hivemq.com")
+# MQTT Broker Settings (Using test.mosquitto.org as the default MQTT broker)
+MQTT_BROKER = os.getenv("MQTT_BROKER", "test.mosquitto.org")
 MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))  # Default MQTT port
 # Generate a unique client ID with timestamp
 import uuid
@@ -203,18 +203,18 @@ class MQTTHandler:
             client_id = client._client_id.decode() if hasattr(client._client_id, 'decode') else client._client_id
 
             if rc == 0:
-                logger.info(f"MQTT 브로커에 연결되었습니다. (Client ID: {client_id})")
+                logger.info(f"Successfully connected to MQTT broker. (Client ID: {client_id})")
 
                 try:
                     # Subscribe to status topic
                     result, mid = client.subscribe(MQTT_STATUS_TOPIC, qos=MQTT_QOS)
                     if result == 0:
-                        logger.info(f"토픽 구독 성공: {MQTT_STATUS_TOPIC} (QoS: {MQTT_QOS})")
+                        logger.info(f"Successfully subscribed to topic: {MQTT_STATUS_TOPIC} (QoS: {MQTT_QOS})")
 
                     # Subscribe to all topics under the prefix for debugging
                     result, mid = client.subscribe(f"{MQTT_TOPIC_PREFIX}/#", qos=MQTT_QOS)
                     if result == 0:
-                        logger.info(f"토픽 구독 성공: {MQTT_TOPIC_PREFIX}/# (QoS: {MQTT_QOS})")
+                        logger.info(f"Successfully subscribed to topic: {MQTT_TOPIC_PREFIX}/# (QoS: {MQTT_QOS})")
 
                     global_state.mqtt_connected = True
 
@@ -227,47 +227,47 @@ class MQTTHandler:
                     self.publish_status(status_data)
 
                 except Exception as e:
-                    logger.error(f"구독 또는 상태 발행 중 오류: {e}")
+                    logger.error(f"Error during subscription or status publishing: {e}")
 
             else:
                 error_messages = {
-                    1: "잘못된 프로토콜 버전",
-                    2: "클라이언트 ID가 유효하지 않음",
-                    3: "브로커를 사용할 수 없음",
-                    4: "잘못된 사용자 이름 또는 비밀번호",
-                    5: "인증 실패",
-                    7: "연결이 거부됨 - 인증 필요"
+                    1: "Invalid protocol version",
+                    2: "Invalid client identifier",
+                    3: "Broker unavailable",
+                    4: "Bad username or password",
+                    5: "Authentication failed",
+                    7: "Connection refused - not authorized"
                 }
                 error_msg = error_messages.get(rc, f"알 수 없는 오류 (코드: {rc})")
-                logger.error(f"MQTT 연결 실패: {error_msg}")
+                logger.error(f"MQTT connection failed: {error_msg}")
 
                 # Schedule reconnection for non-fatal errors
                 if rc not in [1, 2]:  # Don't retry for protocol version or client ID errors
-                    logger.info("5초 후 재연결을 시도합니다...")
+                    logger.info("Attempting to reconnect in 5 seconds...")
                     time.sleep(5)
                     self.connect()
 
         except Exception as e:
-            logger.error(f"연결 처리 중 오류: {e}")
+            logger.error(f"Error during connection handling: {e}")
 
     def on_disconnect(self, client, userdata, rc, properties=None):
         global_state.mqtt_connected = False
         if rc != 0:
-            logger.warning(f"MQTT 브로커 연결이 예상치 못하게 끊어졌습니다. (코드: {rc})")
+            logger.warning(f"MQTT broker connection unexpectedly lost. (Code: {rc})")
             self.schedule_reconnect()
         else:
-            logger.info("MQTT 브로커 연결이 정상적으로 종료되었습니다.")
+            logger.info("MQTT broker connection closed normally.")
 
     def on_message(self, client, userdata, msg):
         try:
             topic = msg.topic
             payload = msg.payload.decode('utf-8')
-            logger.debug(f"MQTT 메시지 수신 - 토픽: {topic}, 크기: {len(payload)} bytes")
+            logger.debug(f"MQTT message received - Topic: {topic}, Size: {len(payload)} bytes")
 
             try:
                 payload_data = json.loads(payload)
             except json.JSONDecodeError:
-                logger.warning(f"JSON 파싱 실패 - 토픽: {topic}, 내용: {payload[:100]}...")
+                logger.warning(f"JSON parsing failed - Topic: {topic}, Content: {payload[:100]}...")
                 return
 
             # 상태 업데이트 메시지 처리
@@ -288,19 +288,19 @@ class MQTTHandler:
                     })
                     
                     global_state.update_status(status)
-                    logger.info(f"상태 업데이트: queue={status.queue_length}, fps={status.fps:.2f}")
+                    logger.info(f"Status updated: queue={status.queue_length}, fps={status.fps:.2f}")
                     
                 except Exception as e:
-                    logger.error(f"상태 업데이트 처리 오류: {e}\n원본 데이터: {payload}")
+                    logger.error(f"Error processing status update: {e}\nRaw data: {payload}")
             
             # 명령 응답 처리
             elif topic.startswith(f"{MQTT_TOPIC_PREFIX}/response/"):
-                logger.info(f"명령 응답 수신: {topic} - {payload}")
+                logger.info(f"Command response received: {topic} - {payload}")
 
         except json.JSONDecodeError as e:
-            logger.error(f"MQTT 메시지 JSON 파싱 오류: {e}, 원본: {payload}")
+            logger.error(f"MQTT message JSON parsing error: {e}, Original: {payload}")
         except Exception as e:
-            logger.error(f"MQTT 메시지 처리 오류: {e}")
+            logger.error(f"Error processing MQTT message: {e}")
 
     def schedule_reconnect(self):
         """연결이 끊겼을 때 재연결을 예약합니다."""
@@ -316,13 +316,13 @@ class MQTTHandler:
                 try:
                     time.sleep(base_delay * (2 ** retry_count))  # 지수 백오프
                     self.connect()
-                    logger.info("MQTT 재연결 시도 중... (시도 %d/%d)", retry_count + 1, max_retries)
+                    logger.info("Attempting MQTT reconnection... (Attempt %d/%d)", retry_count + 1, max_retries)
                     return
                 except Exception as e:
                     retry_count += 1
-                    logger.error("재연결 실패: %s (시도 %d/%d)", e, retry_count, max_retries)
+                    logger.error("Reconnection failed: %s (Attempt %d/%d)", e, retry_count, max_retries)
 
-            logger.error("최대 재연결 시도 횟수에 도달했습니다.")
+            logger.error("Maximum reconnection attempts reached.")
 
         # Use threading for reconnection to avoid asyncio event loop issues
         reconnect_thread = threading.Thread(target=reconnect, daemon=True)
@@ -334,26 +334,45 @@ class MQTTHandler:
             self.client.on_message = self.on_message
             self.client.on_disconnect = self.on_disconnect
             self.client.on_log = self.on_log
-            
+
+            # Enable more detailed logging
+            self.client.enable_logger(logger)
+
             logger.info(f"Connecting to MQTT broker at {MQTT_BROKER}:{MQTT_PORT}...")
             
-            # Set connection timeout to 10 seconds
-            self.client.connect(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE)
-            
-            # Start the network loop in a separate thread
-            self.client.loop_start()
-            
-            # Wait for connection with timeout
-            max_wait = 3  # seconds
-            for _ in range(max_wait):
-                if self.client.is_connected():
-                    logger.info("MQTT client connected and loop started")
+            try:
+                # Set connection timeout to 10 seconds
+                self.client.connect(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE)
+                logger.info("MQTT socket connected, starting network loop...")
+                
+                # Start the network loop in a separate thread
+                self.client.loop_start()
+                
+                # Wait for connection with timeout
+                max_wait = 5  # Increased from 3 to 5 seconds
+                for _ in range(max_wait):
+                    if self.client.is_connected():
+                        logger.info("MQTT client connected and loop started successfully")
+                        return True
+                    time.sleep(1)
+                
+                # If we get here, connection timed out
+                logger.warning("MQTT connection timed out, but continuing in the background...")
+                return False
+                
+            except Exception as e:
+                logger.error(f"Failed to connect to MQTT broker: {str(e)}")
+                logger.info("Trying alternative MQTT broker: broker.hivemq.com")
+                
+                # Try alternative broker
+                try:
+                    self.client.connect("broker.hivemq.com", 1883, MQTT_KEEPALIVE)
+                    self.client.loop_start()
+                    logger.info("Connected to alternative MQTT broker (broker.hivemq.com)")
                     return True
-                time.sleep(1)
-            
-            # If we get here, connection timed out
-            logger.warning("MQTT connection timed out, but continuing in the background...")
-            return True
+                except Exception as alt_e:
+                    logger.error(f"Failed to connect to alternative broker: {str(alt_e)}")
+                    return False
             
         except socket.gaierror as e:
             logger.error(f"DNS resolution failed for {MQTT_BROKER}:{MQTT_PORT}. Error: {e}")
@@ -372,9 +391,9 @@ class MQTTHandler:
             try:
                 self.client.loop_stop()
                 self.client.disconnect()
-                logger.info("MQTT 클라이언트 중지됨")
+                logger.info("MQTT client stopped")
             except Exception as e:
-                logger.error(f"MQTT 연결 해제 오류: {e}")
+                logger.error(f"Error disconnecting MQTT: {e}")
 
     def send_heartbeat(self):
         """서버 생존 신호 전송"""
@@ -436,19 +455,19 @@ mqtt_handler = MQTTHandler()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 시작 시
-    logger.info("OpenAPI 서버 시작 중...")
+    logger.info("Starting OpenAPI server...")
     try:
         mqtt_handler.connect()
         yield
     finally:
         # 종료 시
-        logger.info("OpenAPI 서버 종료 중...")
+        logger.info("Shutting down OpenAPI server...")
         mqtt_handler.disconnect()
 
 # FastAPI 앱 설정
 app = FastAPI(
     title="Loki Media Player Control API",
-    description="로키 미디어 플레이어 모니터링 및 제어를 위한 OpenAPI 서버",
+    description="OpenAPI Server for Monitoring and Controlling the Loki Media Player",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -749,9 +768,9 @@ def main():
     args = parser.parse_args()
     
     # 서버 시작 메시지
-    logger.info(f"Loki Media Player OpenAPI 서버 시작 중... (http://{args.host}:{args.port})")
-    logger.info(f"MQTT 브로커: {MQTT_BROKER}:{MQTT_PORT}")
-    logger.info(f"로그 레벨: {args.log_level.upper()}")
+    logger.info(f"Starting Loki Media Player OpenAPI server... (http://{args.host}:{args.port})")
+    logger.info(f"MQTT broker: {MQTT_BROKER}:{MQTT_PORT}")
+    logger.info(f"Log level: {args.log_level.upper()}")
     
     # MQTT 연결 시작
     try:
