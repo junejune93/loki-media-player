@@ -13,7 +13,10 @@
 ---
 
 ## Screenshot
+- loki Media Player
 ![Screenshot1](/assets/Screenshot1.png)
+- loki Media Player OpenAPI Server Doc.
+![Screenshot1](/assets/Screenshot2.png)
 
 ---
 
