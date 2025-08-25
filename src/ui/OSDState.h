@@ -17,6 +17,7 @@ struct OSDState {
     bool showPlaybackInfo = true;
     bool showStatusInfo = true;
     bool showCodecInfo = true;
+    bool showSensorInfo = true;
     float fadeAlpha = 1.0f;
 
     // OSD - Playing Info

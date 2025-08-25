@@ -16,16 +16,24 @@ void OSDRenderer::render(const OSDState &state, int windowWidth, int windowHeigh
     setupOSDStyle(state.fadeAlpha);
 
     // PLAY INFO
-    renderPlaybackInfo(state, windowWidth);
+    if (state.showPlaybackInfo) {
+        renderPlaybackInfo(state, windowWidth);
+    }
 
     // CODEC INFO
-    renderCodecInfo(state, windowWidth, windowHeight);
+    if (state.showCodecInfo) {
+        renderCodecInfo(state, windowWidth, windowHeight);
+    }
 
     // SENSOR INFO
-    renderSensorInfo(state, windowWidth, windowHeight);
+    if (state.showSensorInfo) {
+        renderSensorInfo(state, windowWidth, windowHeight);
+    }
 
     // PLAYER STATUS
-    renderSyncInfo(state, windowWidth, windowHeight);
+    if (state.showStatusInfo) {
+        renderSyncInfo(state, windowWidth, windowHeight);
+    }
     
     renderCenterStatus(state, windowWidth, windowHeight);
 
@@ -38,6 +46,7 @@ void OSDRenderer::handleInput(GLFWwindow *window, OSDState &state) {
     bool iKeyDown = glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS;
     bool sKeyDown = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
     bool cKeyDown = glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
+    bool kKeyDown = glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS;
 
     // key: O
     if (oKeyDown && !_oKeyPressed) {
@@ -66,6 +75,13 @@ void OSDRenderer::handleInput(GLFWwindow *window, OSDState &state) {
         state.updateInteraction();
     }
     _cKeyPressed = cKeyDown;
+
+    // Key: K
+    if (kKeyDown && !_kKeyPressed) {
+        state.showSensorInfo = !state.showSensorInfo;
+        state.updateInteraction();
+    }
+    _kKeyPressed = cKeyDown;
 
     // mouse
     double mouseX, mouseY;

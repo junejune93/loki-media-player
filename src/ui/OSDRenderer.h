@@ -34,6 +34,7 @@ private:
     bool _iKeyPressed = false;      // Key: I (Play Info Toggle)
     bool _sKeyPressed = false;      // Key: S (Play State Toggle)
     bool _cKeyPressed = false;      // Key: C (Codec Info Toggle)
+    bool _kKeyPressed = false;      // Key: K (Sensor Info Toggle)
 
     double _lastMouseX = 0.0;
     double _lastMouseY = 0.0;
