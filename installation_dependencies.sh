@@ -36,3 +36,5 @@ sudo apt install -y \
     wget \
     libstdc++6 \
     libc6-dev \
+    mosquitto \
+    mosquitto-clients
