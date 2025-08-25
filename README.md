@@ -170,34 +170,63 @@ loki-media-player/
 ### Thread Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                             Main Thread                          │
-│  ┌─────────────┐    ┌──────────────┐    ┌─────────────────────┐  │
-│  │  Media      │    │  Video Queue │    │  Video Renderer     │  │
-│  │  Player     │───▶│  (Thread-    │───▶│  (OpenGL Context)   │  │
-│  │  + Decoder  │    │   Safe)      │    │  + UI Rendering     │  │
-│  └─────────────┘    └──────────────┘    └─────────────────────┘  │
-│         │                   │                      ▲             │
-│         │                   │                      │             │
-│         ▼                   ▼                      │             │
-│  ┌─────────────┐    ┌──────────────┐    ┌─────────────────────┐  │
-│  │  Sensor     │    │  Sensor Data │    │  OSD Update         │  │
-│  │  Manager    │───▶│  Queue       │───▶│  (Displays sensor   │  │
-│  └─────────────┘    │  (Thread-    │    │   data in UI)       │  │
-│                     │   Safe)      │    └─────────────────────┘  │
-│                     └──────────────┘                             │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-         │                   │
-         │                   │
-         ▼                   ▼
-  ┌─────────────┐    ┌──────────────┐
-  │  Sensor     │    │  Audio       │
-  │  Thread     │    │  Thread      │
-  │  (Reads     │    │  (Plays back │
-  │   sensor    │    │   audio      │
-  │   data)     │    │   frames)    │
-  └─────────────┘    └──────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                      Main Thread                                            │
+│     ┌─────────────┐    ┌─────────────────┐    ┌─────────────────────┐  ┌────────────────┐   │
+│     │  Media      │    │   Video Queue   │    │  Video Renderer     │  │  UI Manager    │   │
+│     │  Player     │───▶│  (Thread-Safe)  │───▶│  (OpenGL Context)   │  │  (ImGui)       │   │
+│     │  + Decoder  │    │                 │    │  + Shader Effects   │  │  + Controls    │   │
+│     └─────────────┘    └─────────────────┘    └──────────┬──────────┘  └────────┬───────┘   │
+│            │                   │                         │                      │           │
+│            │                   │                         │                      │           │
+│            ▼                   ▼                         ▼                      │           │
+│     ┌─────────────┐    ┌─────────────────┐    ┌─────────────────────┐           │           │
+│     │  Sync       │    │  Audio Queue    │    │  OSD Renderer       │           │           │
+│     │  Manager    │◀──▶│  (Thread-Safe)  │    │  (Frame Timing      │           │           │
+│     └─────────────┘    │                 │    │   + Statistics)     │           │           │
+│                        └─────────────────┘    └─────────────────────┘           │           │
+│                                                                                 │           │
+│     ┌───────────────────────────────────────────────────────────────────────────┘           │
+│     │                                                                                       │
+│     ▼                                                                                       │
+│     ┌────────────────────────────────────────────────────────────────────────┐              │
+│     │  State Management (Play/Pause/Seek)                                    │              │
+│     └────────────────────────────────────────────────────────────────────────┘              │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                       │                   │                           │
+                       │                   │                           │
+                       ▼                   ▼                           ▼
+                ┌─────────────┐    ┌──────────────┐    ┌─────────────────────────────┐
+                │  Decoder    │    │  Audio       │    │  Recording Thread           │
+                │  Thread     │    │  Thread      │    │  (Handles screen recording  │
+                │  (FFmpeg    │    │  (PortAudio  │    │   and encoding)             │
+                │   demuxing &│    │   Callback)  │    │                             │
+                │   decoding) │    │              │    │                             │
+                └─────────────┘    └──────────────┘    └─────────────────────────────┘
+                       │                   │
+                       │                   │
+                       ▼                   ▼
+                ┌─────────────┐    ┌─────────────────┐
+                │  File/      │    │  Audio Device   │
+                │  Network    │    │  (Hardware      │
+                │  I/O        │    │   Interface)    │
+                └─────────────┘    └─────────────────┘
+
+Key Components:
+1. Main Thread: Handles UI rendering, window events, and coordinates between components
+2. Decoder Thread: FFmpeg-based demuxing and decoding of media streams
+3. Audio Thread: Manages audio playback using PortAudio with callback-driven architecture
+4. Video Rendering: OpenGL-based rendering with shader support for effects
+5. Sync Manager: Ensures A/V synchronization using a master clock
+6. Thread-Safe Queues: Enable lock-free communication between threads
+7. Recording Thread: Optional thread for screen recording and encoding
+
+Thread Communication:
+- Video Frames: Decoder → Video Queue → Render Thread
+- Audio Frames: Decoder → Audio Queue → Audio Thread
+- State Changes: Main Thread → All Threads (via atomic variables)
+- Seek Requests: Main Thread → Decoder Thread (with queue flushing)
 ```
 ---
 
