@@ -39,34 +39,41 @@ bool Application::initialize() {
         return false;
     }
 
-    // Report - status
+    // reporter - HTTP
     try {
-        _statusReporter = std::make_unique<HttpReportSource>("https://httpbin.org", "/post");
-        // values (TEST)
-        _channelStatus = {
-                // id, fps, queue_length
-            {0, 30, 5},
-            {1, 30, 3}
-        };
-        _syncStatus = {0.0, false};
-        _sensorStatus = {0.0, 0.0, 0.0};
-        
-        _statusReporter->updateChannelStatus(_channelStatus);
-        _statusReporter->updateSyncStatus(_syncStatus);
-        _statusReporter->updateSensorStatus(_sensorStatus);
-        _statusReporter->start();
-        spdlog::info("Status reporter initialized successfully");
+        _httpReporter = std::make_unique<HttpReportSource>("https://httpbin.org", "/post");
+        _httpReporter->start();
+        spdlog::info("HTTP reporter initialized successfully");
     } catch (const std::exception &e) {
-        spdlog::error("Failed to initialize status reporter: {}", e.what());
+        spdlog::error("Failed to initialize HTTP reporter: {}", e.what());
         return false;
     }
+
+    // reporter - MQTT
+    try {
+        _mqttReporter = std::make_unique<MqttReportSource>("tcp://localhost:1883", "loki-media-player");
+        _mqttReporter->start();
+        spdlog::info("MQTT reporter initialized successfully");
+    } catch (const std::exception &e) {
+        spdlog::error("Failed to initialize MQTT reporter: {}", e.what());
+        return false;
+    }
+
+    // (TEST) Send initial test data
+    _syncStatus = {0.0, false};
+    _sensorStatus = {0.0, 0.0, 0.0};
+    _channelStatus = {// id, fps, queue_length
+                      {0, 30, 0},
+                      {1, 30, 0}};
+
+    updateReporters();
 
     // Sensor Info - collection
     try {
         _sensorSource->start();
-        std::cout << "Sensor source initialized successfully\n";
+        spdlog::info("Sensor source initialized successfully");
     } catch (const std::exception &e) {
-        std::cerr << "Failed to initialize sensor source: " << e.what() << "\n";
+        spdlog::error("Failed to initialize sensor source: {}", e.what());
         return false;
     }
 
@@ -203,17 +210,15 @@ void Application::update() {
     }
     
     // Report
-    if (_statusReporter) {
-        if (_mediaPlayer) {
-            auto state = _mediaPlayer->getState();
-            _channelStatus[0].fps = 30;
-            _channelStatus[0].queue_length = 0;
-            _statusReporter->updateChannelStatus(_channelStatus);
-            
-            _syncStatus.max_offset_ms = state.audioVideoSyncOffset * 1000.0; // ms
-            _syncStatus.locked = state.isPlaying && (std::abs(state.audioVideoSyncOffset) < 0.1);
-            _statusReporter->updateSyncStatus(_syncStatus);
-        }
+    if (_mediaPlayer) {
+        const auto state = _mediaPlayer->getState();
+        _channelStatus[0].fps = 30;
+        _channelStatus[0].queue_length = 0;
+
+        _syncStatus.max_offset_ms = state.audioVideoSyncOffset * 1000.0; // ms
+        _syncStatus.locked = state.isPlaying && (std::abs(state.audioVideoSyncOffset) < 0.1);
+
+        updateReporters();
     }
 
     // OSD (Sensor)
@@ -230,12 +235,10 @@ void Application::update() {
                 _latestSensorData = sensorData;
 
                 // Update Report (Sensor)
-                if (_statusReporter) {
-                    _sensorStatus.temperature = _latestSensorData.temperature;
-                    _sensorStatus.humidity = _latestSensorData.humidity;
-                    _sensorStatus.acceleration = _latestSensorData.acceleration;
-                    _statusReporter->updateSensorStatus(_sensorStatus);
-                }
+                _sensorStatus.temperature = _latestSensorData.temperature;
+                _sensorStatus.humidity = _latestSensorData.humidity;
+                _sensorStatus.acceleration = _latestSensorData.acceleration;
+                updateReporters();
 
                 // Update UI (File Select, Codec Info, OSD)
                 _uiManager->updateOSDData(_mediaPlayer->getState(),
@@ -254,6 +257,22 @@ void Application::update() {
     // OSD
     if (_uiManager && _mediaPlayer) {
         updateOSDData();
+    }
+}
+
+void Application::updateReporters() {
+    // report - HTTP
+    if (_httpReporter) {
+        _httpReporter->updateChannelStatus(_channelStatus);
+        _httpReporter->updateSyncStatus(_syncStatus);
+        _httpReporter->updateSensorStatus(_sensorStatus);
+    }
+
+    // report - MQTT
+    if (_mqttReporter) {
+        _mqttReporter->updateChannelStatus(_channelStatus);
+        _mqttReporter->updateSyncStatus(_syncStatus);
+        _mqttReporter->updateSensorStatus(_sensorStatus);
     }
 }
 
@@ -280,7 +299,7 @@ void Application::updateOSDData() {
     const auto codecInfo = _mediaPlayer->getCodecInfo();
 
     // Sensor - Info
-    if (_sensorSource && _latestSensorData.source != "") {
+    if (_sensorSource && !_latestSensorData.source.empty()) {
         _uiManager->updateOSDData(osdMediaState, codecInfo, _selectedFile,
                                   _latestSensorData.temperature,
                                   _latestSensorData.humidity,
@@ -323,12 +342,19 @@ void Application::render() {
 }
 
 void Application::cleanup() {
-    if (_statusReporter) {
-        _statusReporter->stop();
+    if (_httpReporter) {
+        _httpReporter->stop();
+        _httpReporter.reset();
+    }
+
+    if (_mqttReporter) {
+        _mqttReporter->stop();
+        _mqttReporter.reset();
     }
     
     if (_sensorSource) {
         _sensorSource->stop();
+        _sensorSource.reset();
     }
 
     if (_mediaPlayer) {
