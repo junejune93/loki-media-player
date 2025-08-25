@@ -90,18 +90,18 @@ void FileVideoSource::startRecord() {
         }
 
         _isRecording = true;
-        std::cout << "[INFO] Started recording to: " << sessionDir << std::endl;
+        spdlog::info("Started recording to: {}", sessionDir);
     } catch (const std::exception &e) {
         _encoder.reset();
         _isRecording = false;
-        std::cerr << "[ERROR] Failed to start recording: " << e.what() << std::endl;
+        spdlog::error("Failed to start recording: {}", e.what());
         throw;
     }
 }
 
 void FileVideoSource::stopRecord() {
     if (!_isRecording) {
-        std::cerr << "[WARNING] No active recording to stop" << std::endl;
+        spdlog::warn("No active recording to stop");
         return;
     }
 
@@ -112,14 +112,14 @@ void FileVideoSource::stopRecord() {
             try {
                 _encoder->finalize();
             } catch (const std::exception& e) {
-                std::cerr << "[WARNING] Error finalizing encoder: " << e.what() << std::endl;
+                spdlog::warn("Error finalizing encoder: {}", e.what());
             }
             _encoder.reset();
         }
 
-        std::cout << "[INFO] Recording stopped and saved" << std::endl;
+        spdlog::info("Recording stopped and saved");
     } catch (const std::exception &e) {
-        std::cerr << "[ERROR] Error while stopping recording: " << e.what() << std::endl;
+        spdlog::error("Error while stopping recording: {}", e.what());
         _encoder.reset();
         _isRecording = false;
         throw;
