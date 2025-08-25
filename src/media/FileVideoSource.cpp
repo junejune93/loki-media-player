@@ -179,3 +179,17 @@ std::vector<double> FileVideoSource::getIFrameTimestamps() const {
     }
     return timestamps;
 }
+
+std::vector<double> FileVideoSource::getPFrameTimestamps() const {
+    if (!_decoder) {
+        spdlog::info("No decoder available for P-Frame timestamps");
+        return {};
+    }
+    auto timestamps = _decoder->getPFrameTimestamps();
+    spdlog::info("Retrieved {} P-Frame timestamps", timestamps.size());
+    if (!timestamps.empty()) {
+        spdlog::info("First P-Frame at: {}s", timestamps[0]);
+        spdlog::info("Last P-Frame at: {}s", timestamps.back());
+    }
+    return timestamps;
+}
