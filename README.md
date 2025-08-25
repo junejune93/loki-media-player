@@ -8,6 +8,7 @@
 - Designed for end-to-end solution
 - Designed for Docker-based execution (easy deployment and isolation)
 - <span style="color:deepskyblue; font-weight:bold">Requires a sample media file (`assets/sample.mp4`) to be present for execution</span>
+- Compatible with Ubuntu 22.04 or later  
 
 ---
 
