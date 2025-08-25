@@ -119,6 +119,9 @@ loki-media-player/
 ├── assets/                                 # Resource files (csv, screenshot, media)
 │   └── sensor_data.csv                     # Sample sensor data for simulation
 ├── src/            
+│   ├── openapi/                            # opsenapi server
+│   │   └── openapi_server.py               # opsenapi server implementation
+│   │
 │   ├── core/                               # Core application logic
 │   │   ├── Application.cpp                 # Main application class and entry point
 │   │   ├── Application.h                   # Application header with main loop
@@ -160,6 +163,8 @@ loki-media-player/
 │   ├── report/                             # Report system
 │   │   ├── HttpReportSource.cpp            # Http Client source
 │   │   ├── HttpReportSource.h              # Http Client interface
+│   │   ├── MqttReportSource.cpp            # Mqtt Client source
+│   │   ├── MqttReportSource.h              # Mqtt Client interface
 │   │   └── interface/
 │   │       └── IReportSource.h             # Report source interface
 │   │           
