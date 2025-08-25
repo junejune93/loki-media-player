@@ -79,6 +79,8 @@ sudo systemctl status mosquitto
 # Activate the virtual environment
 source venv/bin/activate
 
+pip install paho-mqtt
+
 # Run the server
 python3 openapi/openapi_server.py
 
