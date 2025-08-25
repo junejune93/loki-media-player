@@ -11,6 +11,26 @@ MediaPlayer::MediaPlayer() = default;
 
 MediaPlayer::~MediaPlayer() {
     stop();
+    
+    if (_audioThread) {
+        _audioThread.reset();
+    }
+
+    if (_frontFBO) {
+        _frontFBO.reset();
+    }
+
+    if (_backFBO) {
+        _backFBO.reset();
+    }
+
+    if (_shaderProgram) {
+        _shaderProgram.reset();
+    }
+
+    if (_source) {
+        _source.reset();
+    }
 }
 
 bool MediaPlayer::initialize(GLFWwindow *window, int videoWidth, int videoHeight) {
