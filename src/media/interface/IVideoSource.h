@@ -34,4 +34,6 @@ public:
     virtual void encodeFrame(const VideoFrame &frame) = 0;
 
     virtual std::vector<double> getIFrameTimestamps() const = 0;
+
+    virtual std::vector<double> getPFrameTimestamps() const = 0;
 };

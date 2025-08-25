@@ -45,12 +45,14 @@ public:
 
     std::vector<double> getIFrameTimestamps() const;
 
+    std::vector<double> getPFrameTimestamps() const;
+
 private:
     void startDecoding();
 
     void initializeCodecInfo();
 
-    void scanForIFrames(AVFormatContext *fmtCtx, int videoStreamIndex, std::vector<double> &timestamps);
+    void scanForFrameTypes(AVFormatContext *fmtCtx, int videoStreamIndex, std::vector<double> &timestamps);
 
     std::string filename;
 
@@ -75,5 +77,7 @@ private:
 
     CodecInfo _codecInfo;
     std::vector<double> _iFrameTimestamps;
+    std::vector<double> _pFrameTimestamps;
     mutable std::mutex _iFrameTimestampsMutex;
+    mutable std::mutex _pFrameTimestampsMutex;
 };

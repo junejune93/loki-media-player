@@ -26,10 +26,10 @@ Decoder::Decoder(std::string file) : filename(std::move(file)) {
     if (_videoStreamIndex < 0)
         throw std::runtime_error("No video _stream found");
 
-    // I-Frames Scan
+    // Scan Frame Types
     {
         if (_videoStreamIndex >= 0) {
-            scanForIFrames(_fmtCtx, _videoStreamIndex, _iFrameTimestamps);
+            scanForFrameTypes(_fmtCtx, _videoStreamIndex, _iFrameTimestamps);
         }
     }
 
@@ -141,7 +141,7 @@ void Decoder::initializeCodecInfo() {
         if (vs->codecpar->bit_rate > 0) {
             _codecInfo.videoBitrate = CodecInfo::formatBitrate(vs->codecpar->bit_rate);
         } else if (_fmtCtx->bit_rate > 0) {
-            _codecInfo.videoBitrate = CodecInfo::formatBitrate(_fmtCtx->bit_rate * 0.8);
+            _codecInfo.videoBitrate = CodecInfo::formatBitrate((int64_t )((double)(_fmtCtx->bit_rate) * 0.8));
         }
     }
 
@@ -191,28 +191,58 @@ void Decoder::initializeCodecInfo() {
     }
 }
 
-void Decoder::scanForIFrames(AVFormatContext *fmtCtx, int videoStreamIndex, std::vector<double> &timestamps) {
+void Decoder::scanForFrameTypes(AVFormatContext *fmtCtx, int videoStreamIndex, std::vector<double> &timestamps) {
+    av_seek_frame(fmtCtx, videoStreamIndex, 0, AVSEEK_FLAG_FRAME);
     AVPacket *packet = av_packet_alloc();
-    if (!packet) {
-        return;
+
+    // clear
+    {
+        std::lock_guard<std::mutex> lock1(_iFrameTimestampsMutex);
+        _iFrameTimestamps.clear();
     }
 
-    _iFrameTimestamps.clear();
+    {
+        std::lock_guard<std::mutex> lock2(_pFrameTimestampsMutex);
+        _pFrameTimestamps.clear();
+    }
 
+    // read
     while (av_read_frame(fmtCtx, packet) >= 0) {
         if (packet->stream_index == videoStreamIndex) {
+            double pts = (double)(packet->pts) * av_q2d(fmtCtx->streams[videoStreamIndex]->time_base);
             if (packet->flags & AV_PKT_FLAG_KEY) {
-                double pts = (double)(packet->pts) * av_q2d(fmtCtx->streams[videoStreamIndex]->time_base);
-                timestamps.push_back(pts);
-                if (timestamps.size() <= 5) {
-                    spdlog::debug("Found I-Frame at {} seconds", pts);
-                }
+                // I-Frame
+                std::lock_guard<std::mutex> lock(_iFrameTimestampsMutex);
+                _iFrameTimestamps.push_back(pts);
+            } else if (packet->flags & AV_PKT_FLAG_DISCARD) {
+                ;
+            } else {
+                // P/B-Frame
+                std::lock_guard<std::mutex> lock(_pFrameTimestampsMutex);
+                _pFrameTimestamps.push_back(pts);
             }
         }
         av_packet_unref(packet);
     }
+
+    // Sort - Frame(I)
+    {
+        std::lock_guard<std::mutex> lock1(_iFrameTimestampsMutex);
+        std::sort(_iFrameTimestamps.begin(), _iFrameTimestamps.end());
+    }
+
+    // Sort - Frame(P,B)
+    {
+        std::lock_guard<std::mutex> lock2(_pFrameTimestampsMutex);
+        std::sort(_pFrameTimestamps.begin(), _pFrameTimestamps.end());
+    }
+
+    {
+        timestamps = _iFrameTimestamps;
+    }
+
     av_packet_free(&packet);
-    av_seek_frame(fmtCtx, -1, 0, AVSEEK_FLAG_BACKWARD);
+    av_seek_frame(fmtCtx, videoStreamIndex, 0, AVSEEK_FLAG_FRAME);
 }
 
 CodecInfo Decoder::getCodecInfo() const {
@@ -272,6 +302,11 @@ bool Decoder::seek(double timeInSeconds) {
 std::vector<double> Decoder::getIFrameTimestamps() const {
     std::lock_guard<std::mutex> lock(_iFrameTimestampsMutex);
     return _iFrameTimestamps;
+}
+
+std::vector<double> Decoder::getPFrameTimestamps() const {
+    std::lock_guard<std::mutex> lock(_pFrameTimestampsMutex);
+    return _pFrameTimestamps;
 }
 
 void Decoder::startDecoding() {

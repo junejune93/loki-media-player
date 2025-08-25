@@ -38,6 +38,8 @@ public:
 
     std::vector<double> getIFrameTimestamps() const override;
 
+    std::vector<double> getPFrameTimestamps() const override;
+
 private:
     std::unique_ptr<Decoder> _decoder;
     std::unique_ptr<Encoder> _encoder;
