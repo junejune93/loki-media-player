@@ -40,9 +40,9 @@
 ## Getting Started
 
 ### Prerequisites
-- Linux (Ubuntu 20.04 or later recommended)
-- Requires CMake 3.14 or later
-- Requires C++17 or later compiler
+- Linux (Ubuntu 22.04 or later)
+- Requires CMake 3.15 or later
+- Requires C++20
 - [FFmpeg](https://ffmpeg.org/) development libraries:
   - libavformat
   - libavcodec
@@ -186,9 +186,9 @@ loki-media-player/
 │     └─────────────┘    │                 │    │   + Statistics)     │           │           │
 │                        └─────────────────┘    └─────────────────────┘           │           │
 │                                                                                 │           │
-│     ┌───────────────────────────────────────────────────────────────────────────┘           │
-│     │                                                                                       │
-│     ▼                                                                                       │
+│                                       ┌─────────────────────────────────────────┘           │
+│                                       │                                                     │
+│                                       ▼                                                     │
 │     ┌────────────────────────────────────────────────────────────────────────┐              │
 │     │  State Management (Play/Pause/Seek)                                    │              │
 │     └────────────────────────────────────────────────────────────────────────┘              │
