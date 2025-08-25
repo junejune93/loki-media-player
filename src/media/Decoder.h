@@ -50,6 +50,8 @@ private:
 
     void initializeCodecInfo();
 
+    void scanForIFrames(AVFormatContext *fmtCtx, int videoStreamIndex, std::vector<double> &timestamps);
+
     std::string filename;
 
     AVFormatContext *_fmtCtx{nullptr};
@@ -72,4 +74,6 @@ private:
     std::atomic<double> _seekTarget{0.0};
 
     CodecInfo _codecInfo;
+    std::vector<double> _iFrameTimestamps;
+    mutable std::mutex _iFrameTimestampsMutex;
 };

@@ -26,6 +26,13 @@ Decoder::Decoder(std::string file) : filename(std::move(file)) {
     if (_videoStreamIndex < 0)
         throw std::runtime_error("No video _stream found");
 
+    // I-Frames Scan
+    {
+        if (_videoStreamIndex >= 0) {
+            scanForIFrames(_fmtCtx, _videoStreamIndex, _iFrameTimestamps);
+        }
+    }
+
     // Video codec
     {
         AVStream *vs = _fmtCtx->streams[_videoStreamIndex];
@@ -184,6 +191,30 @@ void Decoder::initializeCodecInfo() {
     }
 }
 
+void Decoder::scanForIFrames(AVFormatContext *fmtCtx, int videoStreamIndex, std::vector<double> &timestamps) {
+    AVPacket *packet = av_packet_alloc();
+    if (!packet) {
+        return;
+    }
+
+    _iFrameTimestamps.clear();
+
+    while (av_read_frame(fmtCtx, packet) >= 0) {
+        if (packet->stream_index == videoStreamIndex) {
+            if (packet->flags & AV_PKT_FLAG_KEY) {
+                double pts = (double)(packet->pts) * av_q2d(fmtCtx->streams[videoStreamIndex]->time_base);
+                timestamps.push_back(pts);
+                if (timestamps.size() <= 5) {
+                    spdlog::debug("Found I-Frame at {} seconds", pts);
+                }
+            }
+        }
+        av_packet_unref(packet);
+    }
+    av_packet_free(&packet);
+    av_seek_frame(fmtCtx, -1, 0, AVSEEK_FLAG_BACKWARD);
+}
+
 CodecInfo Decoder::getCodecInfo() const {
     return _codecInfo;
 }
@@ -239,31 +270,8 @@ bool Decoder::seek(double timeInSeconds) {
 }
 
 std::vector<double> Decoder::getIFrameTimestamps() const {
-    std::vector<double> timestamps;
-    if (!_fmtCtx || _videoStreamIndex < 0) {
-        spdlog::debug("getIFrameTimestamps: No format context or invalid video stream index");
-        return timestamps;
-    }
-
-    AVPacket packet;
-    av_init_packet(&packet);
-
-    int frameCount = 0;
-    while (av_read_frame(_fmtCtx, &packet) >= 0) {
-        if (packet.stream_index == _videoStreamIndex) {
-            if (packet.flags & AV_PKT_FLAG_KEY) {
-                double pts = packet.pts * av_q2d(_fmtCtx->streams[_videoStreamIndex]->time_base);
-                timestamps.push_back(pts);
-                frameCount++;
-                if (frameCount <= 5) {
-                    spdlog::debug("Found I-Frame at {} seconds", pts);
-                }
-            }
-        }
-        av_packet_unref(&packet);
-    }
-
-    return timestamps;
+    std::lock_guard<std::mutex> lock(_iFrameTimestampsMutex);
+    return _iFrameTimestamps;
 }
 
 void Decoder::startDecoding() {
