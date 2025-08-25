@@ -63,6 +63,27 @@
 
 ## Build Instructions
 
+### Setup and Installation (OpenAPI Sever)
+```bash
+# Update package lists
+sudo apt-get update
+
+# Install dependencies
+./installation_dependencies.sh
+
+# Activate Service
+sudo systemctl start mosquitto
+sudo systemctl enable mosquitto
+sudo systemctl status mosquitto
+
+# Activate the virtual environment
+source venv/bin/activate
+
+# Run the server
+python3 openapi/openapi_server.py
+
+```
+
 ### Setup and Installation (Docker)
 ```bash
 # Update package lists
