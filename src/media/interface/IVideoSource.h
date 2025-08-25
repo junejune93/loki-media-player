@@ -32,4 +32,6 @@ public:
     virtual ThreadSafeQueue<AudioFrame> &getAudioQueue() = 0;
 
     virtual void encodeFrame(const VideoFrame &frame) = 0;
+
+    virtual std::vector<double> getIFrameTimestamps() const = 0;
 };

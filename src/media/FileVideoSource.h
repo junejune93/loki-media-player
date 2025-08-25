@@ -36,6 +36,8 @@ public:
 
     void encodeFrame(const VideoFrame &frame) override;
 
+    std::vector<double> getIFrameTimestamps() const override;
+
 private:
     std::unique_ptr<Decoder> _decoder;
     std::unique_ptr<Encoder> _encoder;

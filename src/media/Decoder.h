@@ -43,6 +43,8 @@ public:
 
     CodecInfo getCodecInfo() const;
 
+    std::vector<double> getIFrameTimestamps() const;
+
 private:
     void startDecoding();
 

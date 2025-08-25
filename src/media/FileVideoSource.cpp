@@ -1,7 +1,7 @@
 #include "FileVideoSource.h"
 #include <cstring>
 #include <filesystem>
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 FileVideoSource::FileVideoSource(const std::string &filename)
     : _decoder(std::make_unique<Decoder>(filename)) {
@@ -164,4 +164,18 @@ void FileVideoSource::encodeFrame(const VideoFrame &frame) {
         _encoder->encodeFrame(frameCopy);
     } catch (const std::exception &e) {
     }
+}
+
+std::vector<double> FileVideoSource::getIFrameTimestamps() const {
+    if (!_decoder) {
+        spdlog::info("No decoder available for I-Frame timestamps");
+        return {};
+    }
+    auto timestamps = _decoder->getIFrameTimestamps();
+    spdlog::info("Retrieved {} I-Frame timestamps", timestamps.size());
+    if (!timestamps.empty()) {
+        spdlog::info("First I-Frame at: {}s", timestamps[0]);
+        spdlog::info("Last I-Frame at: {}s", timestamps.back());
+    }
+    return timestamps;
 }

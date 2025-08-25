@@ -1,9 +1,9 @@
 #include "Decoder.h"
 #include "VideoRenderer.h"
 #include "AudioPlayer.h"
-#include <iostream>
 #include <stdexcept>
 #include <utility>
+#include <spdlog/spdlog.h>
 
 Decoder::Decoder(std::string file) : filename(std::move(file)) {
     avformat_network_init();
@@ -236,6 +236,34 @@ bool Decoder::seek(double timeInSeconds) {
     _seekRequested = true;
 
     return true;
+}
+
+std::vector<double> Decoder::getIFrameTimestamps() const {
+    std::vector<double> timestamps;
+    if (!_fmtCtx || _videoStreamIndex < 0) {
+        spdlog::debug("getIFrameTimestamps: No format context or invalid video stream index");
+        return timestamps;
+    }
+
+    AVPacket packet;
+    av_init_packet(&packet);
+
+    int frameCount = 0;
+    while (av_read_frame(_fmtCtx, &packet) >= 0) {
+        if (packet.stream_index == _videoStreamIndex) {
+            if (packet.flags & AV_PKT_FLAG_KEY) {
+                double pts = packet.pts * av_q2d(_fmtCtx->streams[_videoStreamIndex]->time_base);
+                timestamps.push_back(pts);
+                frameCount++;
+                if (frameCount <= 5) {
+                    spdlog::debug("Found I-Frame at {} seconds", pts);
+                }
+            }
+        }
+        av_packet_unref(&packet);
+    }
+
+    return timestamps;
 }
 
 void Decoder::startDecoding() {
