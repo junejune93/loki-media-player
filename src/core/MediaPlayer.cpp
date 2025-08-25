@@ -89,6 +89,13 @@ bool MediaPlayer::loadFile(const std::string &filename) {
         );
 
         _audioThread->start();
+        
+        // Set - I-Frame/P-Frame timestamps
+        auto iFrameTimestamps = _source->getIFrameTimestamps();
+        auto pFrameTimestamps = _source->getPFrameTimestamps();
+        _state.setIFrameTimestamps(iFrameTimestamps);
+        _state.setPFrameTimestamps(pFrameTimestamps);
+        
         return true;
 
     } catch (const std::exception &e) {
