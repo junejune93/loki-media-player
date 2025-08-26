@@ -27,12 +27,17 @@ void ControlPanel::render(MediaState &state) {
     ImGui::End();
 }
 
+
 void ControlPanel::renderProgressBar(MediaState &state) {
     ImGui::SetCursorPosY(8);
     auto progress = static_cast<float>(state.getProgress());
     float progressValue = progress;
 
-    ImGui::PushItemWidth(static_cast<float>(_videoWidth) - 240);
+    const float progressBarWidth = static_cast<float>(_videoWidth) - 240;
+    const ImVec2 progressBarPos = ImGui::GetCursorScreenPos();
+    const float progressBarHeight = ImGui::GetFrameHeight();
+
+    ImGui::PushItemWidth(progressBarWidth);
     ImGui::SetCursorPosX(12);
 
     if (ImGui::SliderFloat("##progress", &progressValue, 0.0f, 1.0f, "")) {
@@ -43,6 +48,37 @@ void ControlPanel::renderProgressBar(MediaState &state) {
             }
         }
     }
+
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+    // markers - I-Frame(blue)
+    const ImU32 iFrameColor = IM_COL32(0, 0, 255, 255);
+    for (const auto& timestamp : state.getIFrameTimestamps()) {
+        if (timestamp <= state.totalDuration && state.totalDuration > 0) {
+            float pos = static_cast<float>(timestamp / state.totalDuration) * progressBarWidth;
+            drawList->AddLine(
+                ImVec2(progressBarPos.x + pos, progressBarPos.y),
+                ImVec2(progressBarPos.x + pos, progressBarPos.y + progressBarHeight),
+                iFrameColor,
+                2.0f
+            );
+        }
+    }
+
+    // markers - P-Frame(green)
+    const ImU32 pFrameColor = IM_COL32(0, 255, 0, 200);
+    for (const auto& timestamp : state.getPFrameTimestamps()) {
+        if (timestamp <= state.totalDuration && state.totalDuration > 0) {
+            float pos = static_cast<float>(timestamp / state.totalDuration) * progressBarWidth;
+            drawList->AddLine(
+                ImVec2(progressBarPos.x + pos, progressBarPos.y + progressBarHeight * 0.3f),
+                ImVec2(progressBarPos.x + pos, progressBarPos.y + progressBarHeight * 0.7f),
+                pFrameColor,
+                1.0f
+            );
+        }
+    }
+
     ImGui::PopItemWidth();
 }
 
