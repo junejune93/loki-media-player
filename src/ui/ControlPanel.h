@@ -39,6 +39,7 @@ private:
     int _controlsHeight;
 
     bool _isRecording{false};
+    bool _showMarkers{true};
 
     std::function<void()> _onPlay;
     std::function<void()> _onPause;
