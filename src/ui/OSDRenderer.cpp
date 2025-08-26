@@ -41,47 +41,39 @@ void OSDRenderer::render(const OSDState &state, int windowWidth, int windowHeigh
 }
 
 void OSDRenderer::handleInput(GLFWwindow *window, OSDState &state) {
-    // key input
-    bool oKeyDown = glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS;
-    bool iKeyDown = glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS;
-    bool sKeyDown = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
-    bool cKeyDown = glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
-    bool kKeyDown = glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS;
+    // key - input map
+    constexpr std::array<std::pair<int, const char*>, 5> keys = {{
+        {GLFW_KEY_O, "O"},
+        {GLFW_KEY_I, "I"},
+        {GLFW_KEY_S, "S"},
+        {GLFW_KEY_C, "C"},
+        {GLFW_KEY_K, "K"}
+    }};
+    std::array<bool, 5> keyStates{};
+    std::array<bool*, 5> previousStates = {
+        &_oKeyPressed, &_iKeyPressed, &_sKeyPressed, &_cKeyPressed, &_kKeyPressed
+    };
 
-    // key: O
-    if (oKeyDown && !_oKeyPressed) {
-        state.visible = !state.visible;
-        state.updateInteraction();
+    // key - status
+    for (std::size_t i = 0; i < keys.size(); ++i) {
+        keyStates[i] = glfwGetKey(window, keys[i].first) == GLFW_PRESS;
     }
-    _oKeyPressed = oKeyDown;
 
-    // key: I
-    if (iKeyDown && !_iKeyPressed) {
-        state.showPlaybackInfo = !state.showPlaybackInfo;
-        state.updateInteraction();
+    // key - toggle
+    for (std::size_t i = 0; i < keyStates.size(); ++i) {
+        if (keyStates[i] && !(*previousStates[i])) {
+            switch (i) {
+                case 0: state.allVisible = !state.allVisible; break;
+                case 1: state.showPlaybackInfo = !state.showPlaybackInfo; break;
+                case 2: state.showStatusInfo = !state.showStatusInfo; break;
+                case 3: state.showCodecInfo = !state.showCodecInfo; break;
+                case 4: state.showSensorInfo = !state.showSensorInfo; break;
+                default: break;
+            }
+            state.updateInteraction();
+        }
+        *previousStates[i] = keyStates[i];
     }
-    _iKeyPressed = iKeyDown;
-
-    // key: S
-    if (sKeyDown && !_sKeyPressed) {
-        state.showStatusInfo = !state.showStatusInfo;
-        state.updateInteraction();
-    }
-    _sKeyPressed = sKeyDown;
-
-    // key: C
-    if (cKeyDown && !_cKeyPressed) {
-        state.showCodecInfo = !state.showCodecInfo;
-        state.updateInteraction();
-    }
-    _cKeyPressed = cKeyDown;
-
-    // Key: K
-    if (kKeyDown && !_kKeyPressed) {
-        state.showSensorInfo = !state.showSensorInfo;
-        state.updateInteraction();
-    }
-    _kKeyPressed = cKeyDown;
 
     // mouse
     double mouseX, mouseY;
