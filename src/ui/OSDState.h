@@ -13,7 +13,7 @@
 
 struct OSDState {
     // OSD - Control
-    bool allVisible = true;
+    bool allVisible = false;
     bool showPlaybackInfo = true;
     bool showStatusInfo = true;
     bool showCodecInfo = true;
