@@ -37,6 +37,7 @@
 - H.264 Encoding & Storage: libx264-based H.264 stream encoding with frame timestamp synchronization verification, 3-minute interval file segmentation using std::filesystem for path/file management
 - Screen Recording: <span style="color:deepskyblue; font-weight:bold">MP4-based recording</span> with real-time screen capture and compression
 - Status Reporting: HTTP-based reporting with connection pool for real-time channel, sensor, synchronization monitoring <span style="color:deepskyblue; font-weight:bold">at 20-second intervals</span>
+- Frame Markers: I-Frame/P-Frame visual indicators with color-coded timeline markers for GOP structure analysis
 
 ---
 
