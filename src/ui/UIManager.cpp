@@ -141,13 +141,6 @@ void UIManager::handleOSDInput(GLFWwindow *window) {
     }
 }
 
-void UIManager::setOSDVisible(bool visible) {
-    _osdState.visible = visible;
-    if (visible) {
-        _osdState.updateInteraction();
-    }
-}
-
 void UIManager::setWindowSize(int width, int height) {
     if (_controlPanel) {
         _controlPanel->setWindowSize(width, height);

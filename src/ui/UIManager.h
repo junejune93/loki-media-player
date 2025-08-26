@@ -42,8 +42,6 @@ public:
 
     void handleOSDInput(GLFWwindow *window);
 
-    void setOSDVisible(bool visible);
-
     void setWindowSize(int width, int height);
 
     // Record
