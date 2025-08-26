@@ -27,7 +27,6 @@ void ControlPanel::render(MediaState &state) {
     ImGui::End();
 }
 
-
 void ControlPanel::renderProgressBar(MediaState &state) {
     ImGui::SetCursorPosY(8);
     auto progress = static_cast<float>(state.getProgress());
@@ -51,22 +50,48 @@ void ControlPanel::renderProgressBar(MediaState &state) {
 
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-    // markers - I-Frame(blue)
-    const ImU32 iFrameColor = IM_COL32(0, 0, 255, 255);
+    const ImU32 iFrameColor = IM_COL32(255, 165, 0, 255 /* Orange */);
+    const ImU32 pFrameColor = IM_COL32(50, 205, 50, 180 /* Lime Green */);
+
+    ImVec2 mousePos = ImGui::GetIO().MousePos;
+    bool showTooltip = false;
+    double tooltipTimestamp = 0.0;
+
+    // markers - I-Frame
     for (const auto& timestamp : state.getIFrameTimestamps()) {
         if (timestamp <= state.totalDuration && state.totalDuration > 0) {
             float pos = static_cast<float>(timestamp / state.totalDuration) * progressBarWidth;
+           ImVec2 markerPos = ImVec2(progressBarPos.x + pos, progressBarPos.y);
+
+            // check - mouse hover
+            ImVec2 markerRect1(markerPos.x - 3.0f, markerPos.y);
+            ImVec2 markerRect2(markerPos.x + 3.0f, markerPos.y + progressBarHeight);
+            bool isHovering = (mousePos.x >= markerRect1.x && mousePos.x <= markerRect2.x &&
+                              mousePos.y >= markerRect1.y && mousePos.y <= markerRect2.y);
+
+            // effect - mouse hover
+            if (isHovering) {
+                showTooltip = true;
+                tooltipTimestamp = timestamp;
+
+                drawList->AddLine(
+                    ImVec2(markerPos.x, markerPos.y - 2),
+                    ImVec2(markerPos.x, markerPos.y + progressBarHeight + 2),
+                    IM_COL32(255, 255, 255, 100),
+                    6.0f
+                );
+            }
+
             drawList->AddLine(
-                ImVec2(progressBarPos.x + pos, progressBarPos.y),
-                ImVec2(progressBarPos.x + pos, progressBarPos.y + progressBarHeight),
+                markerPos,
+                ImVec2(markerPos.x, markerPos.y + progressBarHeight),
                 iFrameColor,
-                2.0f
+                isHovering ? 4.0f : 3.0f
             );
         }
     }
 
-    // markers - P-Frame(green)
-    const ImU32 pFrameColor = IM_COL32(0, 255, 0, 200);
+    // markers - P-Frame
     for (const auto& timestamp : state.getPFrameTimestamps()) {
         if (timestamp <= state.totalDuration && state.totalDuration > 0) {
             float pos = static_cast<float>(timestamp / state.totalDuration) * progressBarWidth;
@@ -74,9 +99,27 @@ void ControlPanel::renderProgressBar(MediaState &state) {
                 ImVec2(progressBarPos.x + pos, progressBarPos.y + progressBarHeight * 0.3f),
                 ImVec2(progressBarPos.x + pos, progressBarPos.y + progressBarHeight * 0.7f),
                 pFrameColor,
-                1.0f
+                1.5f
             );
         }
+    }
+
+    // tooltip - I-Frame timestamp
+    if (showTooltip) {
+        ImGui::SetNextWindowPos(ImVec2(mousePos.x + 10, mousePos.y - 30));
+        ImGui::SetNextWindowSize(ImVec2(0, 0));
+        ImGui::Begin("##IFrameTooltip", nullptr,
+                    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                    ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize |
+                    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing);
+
+        // timestamp format(HH:MM:SS.mmm)
+        int hours = static_cast<int>(tooltipTimestamp / 3600);
+        int minutes = static_cast<int>((tooltipTimestamp - hours * 3600) / 60);
+        double seconds = tooltipTimestamp - hours * 3600 - minutes * 60;
+
+        ImGui::Text("I-Frame: %02d:%02d:%06.3f", hours, minutes, seconds);
+        ImGui::End();
     }
 
     ImGui::PopItemWidth();
