@@ -32,7 +32,7 @@ void ControlPanel::renderProgressBar(MediaState &state) {
     auto progress = static_cast<float>(state.getProgress());
     float progressValue = progress;
 
-    const float progressBarWidth = static_cast<float>(_videoWidth) - 240;
+    const float progressBarWidth = static_cast<float>(_videoWidth) - 24;
     const ImVec2 progressBarPos = ImGui::GetCursorScreenPos();
     const float progressBarHeight = ImGui::GetFrameHeight();
 
