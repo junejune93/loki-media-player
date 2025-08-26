@@ -9,7 +9,7 @@ OSDRenderer::OSDRenderer() {
 OSDRenderer::~OSDRenderer() = default;
 
 void OSDRenderer::render(const OSDState &state, int windowWidth, int windowHeight) {
-    if (!state.visible) {
+    if (!state.allVisible) {
         return;
     }
 
