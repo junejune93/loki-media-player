@@ -27,6 +27,36 @@ void ControlPanel::render(MediaState &state) {
     ImGui::End();
 }
 
+bool ControlPanel::handleKeyInput(int key, int action, const MediaState &state) {
+    if (key == GLFW_KEY_SPACE) {
+        if (action == GLFW_PRESS && !_spacePressed) {
+            _spacePressed = true;
+            if (_onPause && _onPlay) {
+                auto &io = ImGui::GetIO();
+                if (!io.WantCaptureKeyboard && !ImGui::IsAnyItemActive()) {
+                    if (state.isPlaying) {
+                        _onPause();
+                    } else {
+                        _onPlay();
+                    }
+                    return true;
+                }
+            }
+        } else if (action == GLFW_RELEASE) {
+            _spacePressed = false;
+        }
+    }
+    return false;
+}
+
+void ControlPanel::handleInput(GLFWwindow* window, const MediaState& state) {
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        handleKeyInput(GLFW_KEY_SPACE, GLFW_PRESS, state);
+    } else if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+        handleKeyInput(GLFW_KEY_SPACE, GLFW_RELEASE, state);
+    }
+}
+
 void ControlPanel::renderProgressBar(MediaState &state) {
     ImGui::SetCursorPosY(8);
     auto progress = static_cast<float>(state.getProgress());

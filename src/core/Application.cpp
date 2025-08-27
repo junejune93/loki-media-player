@@ -193,6 +193,12 @@ void Application::run() {
 void Application::handleEvents() {
     glfwPollEvents();
 
+    // ControlPanel
+    if (_controlPanel) {
+        auto state = _mediaPlayer->getState();
+        _controlPanel->handleInput(_window, state);
+    }
+
     // OSD
     if (_uiManager) {
         _uiManager->handleOSDInput(_window);

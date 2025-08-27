@@ -1,9 +1,10 @@
 #pragma once
 
-#include "core/MediaState.h"
-#include "imgui.h"
+#include <GLFW/glfw3.h>
 #include <functional>
 #include <utility>
+#include "core/MediaState.h"
+#include "imgui.h"
 
 class ControlPanel {
 public:
@@ -28,6 +29,9 @@ public:
     void setStopRecordingCallback(std::function<void()> cb) { _onStopRecording = std::move(cb); }
     void setRecordingState(bool isRecording) { _isRecording = isRecording; }
 
+    bool handleKeyInput(int key, int action, const MediaState &state);
+    void handleInput(GLFWwindow *window, const MediaState &state);
+
 private:
     void renderProgressBar(MediaState &state);
 
@@ -40,6 +44,7 @@ private:
 
     bool _isRecording{false};
     bool _showMarkers{false};
+    bool _spacePressed{false};
 
     std::function<void()> _onPlay;
     std::function<void()> _onPause;
