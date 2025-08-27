@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <spdlog/spdlog.h>
 
-FileVideoSource::FileVideoSource(const std::string &filename)
+FileVideoSource::FileVideoSource(const std::string &filename, IDecoderSource::DecoderConfig config)
     : _decoder(std::make_unique<Decoder>(filename)) {
     _outputDir = "record";
     std::filesystem::create_directories(_outputDir);

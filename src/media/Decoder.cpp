@@ -5,7 +5,8 @@
 #include <utility>
 #include <spdlog/spdlog.h>
 
-Decoder::Decoder(std::string file) : filename(std::move(file)) {
+Decoder::Decoder(std::string file, const DecoderConfig& config) 
+    : filename(std::move(file)), _config(config) {
     avformat_network_init();
 
     if (avformat_open_input(&_fmtCtx, filename.c_str(), nullptr, nullptr) != 0)

@@ -8,7 +8,7 @@
 
 class FileVideoSource : public IVideoSource {
 public:
-    explicit FileVideoSource(const std::string &filename);
+    explicit FileVideoSource(const std::string &filename, IDecoderSource::DecoderConfig config);
 
     ~FileVideoSource() override;
 

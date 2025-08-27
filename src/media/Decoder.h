@@ -7,6 +7,7 @@
 #include "VideoFrame.h"
 #include "AudioFrame.h"
 #include "ui/OSDState.h"
+#include "interface/IDecoderSource.h"
 
 struct VideoFrame;
 struct AudioFrame;
@@ -21,9 +22,9 @@ extern "C" {
 #include <libavutil/channel_layout.h>
 }
 
-class Decoder {
+class Decoder : public IDecoderSource {
 public:
-    explicit Decoder(std::string filename);
+    explicit Decoder(std::string filename, const DecoderConfig& config = {});
 
     ~Decoder();
 
@@ -37,9 +38,9 @@ public:
 
     bool seek(double timeInSeconds);
 
-    ThreadSafeQueue<VideoFrame> &getVideoQueue() { return _videoQueue; }
+    ThreadSafeQueue<VideoFrame> &getVideoQueue() override { return _videoQueue; }
 
-    ThreadSafeQueue<AudioFrame> &getAudioQueue() { return _audioQueue; }
+    ThreadSafeQueue<AudioFrame> &getAudioQueue() override { return _audioQueue; }
 
     CodecInfo getCodecInfo() const;
 
@@ -55,6 +56,7 @@ private:
     void scanForFrameTypes(AVFormatContext *fmtCtx, int videoStreamIndex, std::vector<double> &timestamps);
 
     std::string filename;
+    DecoderConfig _config;
 
     AVFormatContext *_fmtCtx{nullptr};
     AVCodecContext *_videoCtx{nullptr};

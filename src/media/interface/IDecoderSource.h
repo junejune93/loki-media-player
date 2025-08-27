@@ -16,6 +16,7 @@ public:
 
     struct DecoderConfig {
         DecoderType decoderType{DecoderType::SW};
+        std::string hwDevice;
         bool enableLowLatency{false};
         int maxThreads{0};
     };

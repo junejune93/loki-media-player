@@ -94,7 +94,11 @@ bool MediaPlayer::loadFile(const std::string &filename) {
             _source.reset();
         }
 
-        _source = std::make_unique<FileVideoSource>(filename);
+        auto config = Decoder::DecoderConfig{
+                .decoderType = Decoder::DecoderType::SW
+        };
+
+        _source = std::make_unique<FileVideoSource>(filename, config);
         _state.currentFile = filename;
         _state.totalDuration = _source->getDuration();
         _state.reset();
