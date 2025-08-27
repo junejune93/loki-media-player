@@ -1,59 +1,94 @@
 #pragma once
 
+#include <atomic>
+#include <chrono>
+#include <optional>
 #include <string>
 #include <thread>
-#include <atomic>
+#include <unordered_map>
+#include "AudioFrame.h"
 #include "ThreadSafeQueue.h"
 #include "VideoFrame.h"
-#include "AudioFrame.h"
-#include "ui/OSDState.h"
 #include "interface/IDecoderSource.h"
+#include "ui/OSDState.h"
 
 struct VideoFrame;
 struct AudioFrame;
 
 extern "C" {
-#include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
-#include <libswscale/swscale.h>
-#include <libswresample/swresample.h>
+#include <libavformat/avformat.h>
+#include <libavutil/channel_layout.h>
 #include <libavutil/imgutils.h>
 #include <libavutil/opt.h>
-#include <libavutil/channel_layout.h>
+#include <libswresample/swresample.h>
+#include <libswscale/swscale.h>
 }
 
 class Decoder : public IDecoderSource {
 public:
-    explicit Decoder(std::string filename, const DecoderConfig& config = {});
+    explicit Decoder(std::string filename, const DecoderConfig &config = {});
+    ~Decoder() override;
 
-    ~Decoder();
+    void start() override;
+    void stop() override;
+    void flush() override;
 
-    void start();
-
-    void stop();
-
-    void flush();
-
-    double getDuration() const;
-
-    bool seek(double timeInSeconds);
+    double getDuration() const override;
+    bool seek(double timeInSeconds) override;
 
     ThreadSafeQueue<VideoFrame> &getVideoQueue() override { return _videoQueue; }
-
     ThreadSafeQueue<AudioFrame> &getAudioQueue() override { return _audioQueue; }
 
-    CodecInfo getCodecInfo() const;
-
-    std::vector<double> getIFrameTimestamps() const;
-
-    std::vector<double> getPFrameTimestamps() const;
+    CodecInfo getCodecInfo() const override;
+    std::vector<double> getIFrameTimestamps() const override;
+    std::vector<double> getPFrameTimestamps() const override;
 
 private:
-    void startDecoding();
+    struct DecodingState {
+        bool isFirstAudioFrame = true;
+        double audioStartPTS = 0.0;
+        std::chrono::high_resolution_clock::time_point playbackStartTime;
+
+        void reset() {
+            isFirstAudioFrame = true;
+            audioStartPTS = 0.0;
+            playbackStartTime = std::chrono::high_resolution_clock::now();
+        }
+    };
+
+    void initializeFFmpeg();
+    void openInputFile();
+    void findStreams();
+    void scanFrameTypes();
+    void initializeVideoDecoder();
+    void initializeVideoScaler();
+    void initializeAudioDecoder();
+    void initializeAudioResampler(AVStream *audioStream);
 
     void initializeCodecInfo();
+    void extractContainerFormat();
+    void extractVideoInfo();
+    void extractAudioInfo();
+    static std::string normalizeVideoCodecName(const std::string &codecName) ;
+    static std::string normalizeAudioCodecName(const std::string &codecName) ;
 
     void scanForFrameTypes(AVFormatContext *fmtCtx, int videoStreamIndex, std::vector<double> &timestamps);
+    void clearFrameTimestamps();
+    void addIFrameTimestamp(double pts);
+    void addPFrameTimestamp(double pts);
+    void sortFrameTimestamps();
+
+    void startDecoding();
+    bool handleSeekRequest(DecodingState &state);
+    bool waitForQueueSpace() const;
+    void decodeAudioPacket(AVPacket *packet, AVFrame *frame, DecodingState &state);
+    void decodeVideoPacket(AVPacket *packet, AVFrame *frame, DecodingState &state);
+    std::optional<AudioFrame> createAudioFrame(AVFrame *frame, DecodingState &state);
+    std::optional<VideoFrame> createVideoFrame(AVFrame *frame, const DecodingState &state);
+    void syncVideoFrame(const VideoFrame &videoFrame, const DecodingState &state);
+
+    void cleanup();
 
     std::string filename;
     DecoderConfig _config;
@@ -82,4 +117,6 @@ private:
     std::vector<double> _pFrameTimestamps;
     mutable std::mutex _iFrameTimestampsMutex;
     mutable std::mutex _pFrameTimestampsMutex;
+
+    static constexpr int8_t MAX_QUEUE_SIZE = 50;
 };
