@@ -51,11 +51,25 @@ bool ControlPanel::handleKeyInput(int key, int action, const MediaState &state) 
 }
 
 void ControlPanel::handleInput(GLFWwindow* window, const MediaState& state) {
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+    // key - space bar
+    static bool spaceKeyWasPressed = false;
+    bool spaceKeyIsPressed = (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS);
+
+    if (spaceKeyIsPressed && !spaceKeyWasPressed) {
         handleKeyInput(GLFW_KEY_SPACE, GLFW_PRESS, state);
-    } else if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+    } else if (!spaceKeyIsPressed && spaceKeyWasPressed) {
         handleKeyInput(GLFW_KEY_SPACE, GLFW_RELEASE, state);
     }
+    spaceKeyWasPressed = spaceKeyIsPressed;
+
+    // key - m
+    static bool mKeyWasPressed = false;
+    bool mKeyIsPressed = (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS);
+
+    if (mKeyIsPressed && !mKeyWasPressed) {
+        _showMarkers = !_showMarkers;
+    }
+    mKeyWasPressed = mKeyIsPressed;
 }
 
 void ControlPanel::renderProgressBar(MediaState &state) {
