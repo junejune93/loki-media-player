@@ -1,5 +1,6 @@
-#include <algorithm>
 #include "ControlPanel.h"
+#include <GLFW/glfw3.h>
+#include <algorithm>
 #include "../core/Utils.h"
 
 ControlPanel::ControlPanel(int videoWidth, int controlsHeight)
@@ -82,7 +83,7 @@ void ControlPanel::renderProgressBar(MediaState &state) {
     ImGui::SetCursorPosX(12);
     ImGui::Checkbox("Show Frame Markers", &_showMarkers);
 
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    ImDrawList *drawList = ImGui::GetWindowDrawList();
 
     // markers - On/Off
     if (_showMarkers) {
@@ -94,49 +95,39 @@ void ControlPanel::renderProgressBar(MediaState &state) {
         double tooltipTimestamp = 0.0;
 
         // markers - I-Frame
-        for (const auto& timestamp : state.getIFrameTimestamps()) {
+        for (const auto &timestamp: state.getIFrameTimestamps()) {
             if (timestamp <= state.totalDuration && state.totalDuration > 0) {
                 float pos = static_cast<float>(timestamp / state.totalDuration) * progressBarWidth;
-               ImVec2 markerPos = ImVec2(progressBarPos.x + pos, progressBarPos.y);
+                ImVec2 markerPos = ImVec2(progressBarPos.x + pos, progressBarPos.y);
 
                 // check - mouse hover
                 ImVec2 markerRect1(markerPos.x - 3.0f, markerPos.y);
                 ImVec2 markerRect2(markerPos.x + 3.0f, markerPos.y + progressBarHeight);
                 bool isHovering = (mousePos.x >= markerRect1.x && mousePos.x <= markerRect2.x &&
-                                  mousePos.y >= markerRect1.y && mousePos.y <= markerRect2.y);
+                                   mousePos.y >= markerRect1.y && mousePos.y <= markerRect2.y);
 
                 // effect - mouse hover
                 if (isHovering) {
                     showTooltip = true;
                     tooltipTimestamp = timestamp;
 
-                    drawList->AddLine(
-                        ImVec2(markerPos.x, markerPos.y - 2),
-                        ImVec2(markerPos.x, markerPos.y + progressBarHeight + 2),
-                        IM_COL32(255, 255, 255, 100),
-                        6.0f
-                    );
+                    drawList->AddLine(ImVec2(markerPos.x, markerPos.y - 2),
+                                      ImVec2(markerPos.x, markerPos.y + progressBarHeight + 2),
+                                      IM_COL32(255, 255, 255, 100), 6.0f);
                 }
 
-                drawList->AddLine(
-                    markerPos,
-                    ImVec2(markerPos.x, markerPos.y + progressBarHeight),
-                    iFrameColor,
-                    isHovering ? 4.0f : 3.0f
-                );
+                drawList->AddLine(markerPos, ImVec2(markerPos.x, markerPos.y + progressBarHeight), iFrameColor,
+                                  isHovering ? 4.0f : 3.0f);
             }
         }
 
         // markers - P-Frame
-        for (const auto& timestamp : state.getPFrameTimestamps()) {
+        for (const auto &timestamp: state.getPFrameTimestamps()) {
             if (timestamp <= state.totalDuration && state.totalDuration > 0) {
                 float pos = static_cast<float>(timestamp / state.totalDuration) * progressBarWidth;
-                drawList->AddLine(
-                    ImVec2(progressBarPos.x + pos, progressBarPos.y + progressBarHeight * 0.3f),
-                    ImVec2(progressBarPos.x + pos, progressBarPos.y + progressBarHeight * 0.7f),
-                    pFrameColor,
-                    1.5f
-                );
+                drawList->AddLine(ImVec2(progressBarPos.x + pos, progressBarPos.y + progressBarHeight * 0.3f),
+                                  ImVec2(progressBarPos.x + pos, progressBarPos.y + progressBarHeight * 0.7f),
+                                  pFrameColor, 1.5f);
             }
         }
 
@@ -145,9 +136,9 @@ void ControlPanel::renderProgressBar(MediaState &state) {
             ImGui::SetNextWindowPos(ImVec2(mousePos.x + 10, mousePos.y - 30));
             ImGui::SetNextWindowSize(ImVec2(0, 0));
             ImGui::Begin("##IFrameTooltip", nullptr,
-                        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-                        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize |
-                        ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing);
+                         ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+                                 ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings |
+                                 ImGuiWindowFlags_NoFocusOnAppearing);
 
             // timestamp format(HH:MM:SS.mmm)
             int hours = static_cast<int>(tooltipTimestamp / 3600);
@@ -218,7 +209,7 @@ void ControlPanel::renderControlButtons(const MediaState &state) {
     }
 
     ImGui::SameLine(0, spacing);
-    const char* recordLabel = _isRecording ? "Stop Record" : "Start Record";
+    const char *recordLabel = _isRecording ? "Stop Record" : "Start Record";
     if (ImGui::Button(recordLabel, ImVec2(buttonWidth + 50, buttonHeight))) {
         if (_isRecording) {
             if (_onStopRecording) {
