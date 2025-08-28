@@ -9,7 +9,7 @@
 template<typename T>
 class ThreadSafeQueue {
 public:
-    explicit ThreadSafeQueue(size_t maxSize = 100)
+    explicit ThreadSafeQueue(const size_t maxSize = 100)
             : _maxSize(maxSize) {
 
     }
@@ -45,7 +45,7 @@ public:
         return true;
     }
 
-    bool waitPop(T &item, int timeoutMs = 10) {
+    bool waitPop(T &item, const int timeoutMs = 10) {
         std::unique_lock<std::mutex> lock(_mutex);
         if (!_cond.wait_for(lock, std::chrono::milliseconds(timeoutMs),
                             [this] {
