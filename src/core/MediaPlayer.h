@@ -54,7 +54,7 @@ public:
     void update();
 
     // 비디오 렌더링
-    void render(int windowWidth, int windowHeight, int controlsHeight);
+    void render(int windowWidth, int windowHeight, int controlsHeight) const;
 
     const MediaState &getState() const { return _state; }
 
@@ -64,7 +64,7 @@ public:
         return _source != nullptr ? _source->getDuration() : 0.0;
     }
 
-    CodecInfo getCodecInfo() {
+    CodecInfo getCodecInfo() const {
         return _source != nullptr ? _source->getCodecInfo() : CodecInfo{};
     }
 

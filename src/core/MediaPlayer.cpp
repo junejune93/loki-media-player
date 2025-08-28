@@ -65,7 +65,7 @@ bool MediaPlayer::initialize(GLFWwindow *window, int videoWidth, int videoHeight
 bool MediaPlayer::initializeShaders() {
     _shaderProgram = std::make_unique<ShaderProgram>();
 
-    const char *vertexShaderSrc = R"(
+    const auto vertexShaderSrc = R"(
         #version 330 core
         layout (location = 0) in vec2 aPos;
         layout (location = 1) in vec2 aTex;
@@ -75,7 +75,7 @@ bool MediaPlayer::initializeShaders() {
             gl_Position = vec4(aPos.xy, 0.0, 1.0);
         })";
 
-    const char *fragmentShaderSrc = R"(
+    const auto fragmentShaderSrc = R"(
         #version 330 core
         out vec4 FragColor;
         in vec2 TexCoord;
@@ -115,8 +115,8 @@ bool MediaPlayer::loadFile(const std::string &filename) {
         _audioThread->start();
         
         // Set - I-Frame/P-Frame timestamps
-        auto iFrameTimestamps = _source->getIFrameTimestamps();
-        auto pFrameTimestamps = _source->getPFrameTimestamps();
+        const auto iFrameTimestamps = _source->getIFrameTimestamps();
+        const auto pFrameTimestamps = _source->getPFrameTimestamps();
         _state.setIFrameTimestamps(iFrameTimestamps);
         _state.setPFrameTimestamps(pFrameTimestamps);
         
@@ -205,7 +205,7 @@ void MediaPlayer::update() {
 
         // 비디오 큐에서 프레임 추출
         if (auto vfOpt = Utils::waitPopOpt(videoQueue, 5)) {
-            auto vf = std::move(*vfOpt);
+            const auto vf = std::move(*vfOpt);
             
             if (!_syncManager->isInitialized()) {
                 _syncManager->initialize(vf.pts, vf.pts, 0);
@@ -242,7 +242,7 @@ void MediaPlayer::update() {
     }
 }
 
-void MediaPlayer::render(int windowWidth, int windowHeight, int controlsHeight) {
+void MediaPlayer::render(const int windowWidth, const int windowHeight, const int controlsHeight) const {
     // Draw front FBO to screen (비디오를 상단에 표시)
     glViewport(0, controlsHeight, windowWidth, windowHeight - controlsHeight);
 
