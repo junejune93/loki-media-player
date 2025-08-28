@@ -93,7 +93,7 @@ void HttpReportSource::updateSensorStatus(const SensorStatus &status) {
     _sensorStatus = status;
 }
 
-void HttpReportSource::sendStatus(const std::string &statusJson) {
+void HttpReportSource::sendStatus(const std::string &statusJson) const {
     static int consecutiveFailures = 0;
 
     // Request
@@ -125,7 +125,7 @@ void HttpReportSource::sendStatus(const std::string &statusJson) {
     auto handleError = [](const std::exception &e) { consecutiveFailures++; };
 
     try {
-        auto requestResult = request();
+        const auto requestResult = request();
         response(requestResult);
     } catch (const std::exception &e) {
         handleError(e);

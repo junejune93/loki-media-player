@@ -7,7 +7,7 @@
 #include <spdlog/spdlog.h>
 #include "report/interface/IReportSource.h"
 
-class HttpReportSource : public IReportSource {
+class HttpReportSource final : public IReportSource {
 public:
     HttpReportSource(const std::string &serverUrl, const std::string &endpoint);
 
@@ -24,7 +24,7 @@ public:
     void updateSensorStatus(const SensorStatus &status) override;
 
 private:
-    void sendStatus(const std::string &statusJson);
+    void sendStatus(const std::string &statusJson) const;
 
     std::unique_ptr<cpprest_client::HttpClientImpl> _httpClient;
     std::string _endpoint;
