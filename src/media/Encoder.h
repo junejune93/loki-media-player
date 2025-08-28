@@ -38,8 +38,6 @@ public:
     void finalize();
     
     bool isInitialized() const { return _initialized; }
-    
-    std::string getCurrentOutputPath() const;
 
 private:
     struct OutputStream {
