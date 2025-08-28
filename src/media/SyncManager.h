@@ -240,7 +240,7 @@ private:
         }
     }
 
-    void logSyncStatus() {
+    void logSyncStatus() const {
         std::lock_guard<std::mutex> lock(_mutex);
         if (!_initialized || _frameQueues.empty()) {
             return;
