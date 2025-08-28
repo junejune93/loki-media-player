@@ -6,7 +6,7 @@
 #include "Encoder.h"
 #include "media/interface/IVideoSource.h"
 
-class FileVideoSource : public IVideoSource {
+class FileVideoSource final : public IVideoSource {
 public:
     explicit FileVideoSource(const std::string &filename, IDecoderSource::DecoderConfig config);
 
