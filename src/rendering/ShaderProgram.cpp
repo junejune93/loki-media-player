@@ -22,8 +22,8 @@ ShaderProgram::~ShaderProgram() {
     }
 }
 
-GLuint ShaderProgram::compileShader(GLenum type, const char *src) {
-    GLuint shader = glCreateShader(type);
+GLuint ShaderProgram::compileShader(const GLenum type, const char *src) {
+    const GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &src, nullptr);
     glCompileShader(shader);
 
@@ -38,8 +38,8 @@ GLuint ShaderProgram::compileShader(GLenum type, const char *src) {
 }
 
 bool ShaderProgram::loadVertexFragment(const char *vertSrc, const char *fragSrc) {
-    GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vertSrc);
-    GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragSrc);
+    const GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vertSrc);
+    const GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragSrc);
 
     _program = glCreateProgram();
     glAttachShader(_program, vertexShader);
@@ -63,13 +63,13 @@ bool ShaderProgram::loadVertexFragment(const char *vertSrc, const char *fragSrc)
 }
 
 void ShaderProgram::setupQuadGeometry() {
-    float vertices[] = {
+    const float vertices[] = {
             -1.f, -1.f, 0.f, 0.f,
             1.f, -1.f, 1.f, 0.f,
             1.f, 1.f, 1.f, 1.f,
             -1.f, 1.f, 0.f, 1.f
     };
-    unsigned int indices[] = {0, 1, 2, 2, 3, 0};
+    const unsigned int indices[] = {0, 1, 2, 2, 3, 0};
 
     glGenVertexArrays(1, &_vao);
     glGenBuffers(1, &_vbo);
@@ -93,7 +93,7 @@ void ShaderProgram::use() const {
     glUseProgram(_program);
 }
 
-void ShaderProgram::setUniform1i(const std::string &name, int value) const {
+void ShaderProgram::setUniform1i(const std::string &name, const int value) const {
     glUniform1i(glGetUniformLocation(_program, name.c_str()), value);
 }
 
