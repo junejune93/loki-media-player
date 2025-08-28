@@ -122,6 +122,7 @@ sudo apt-get update
 loki-media-player/
 ├── assets/                                 # Resource files (csv, screenshot, media)
 │   └── sensor_data.csv                     # Sample sensor data for simulation
+│
 ├── src/            
 │   ├── openapi/                            # opsenapi server
 │   │   └── openapi_server.py               # opsenapi server implementation
@@ -155,6 +156,7 @@ loki-media-player/
 │   │   ├── WebcamVideoSource.h             # Webcam source interface
 │   │   └── interface/
 │   │       └── IVideoSource.h              # Video source interface
+│   │       └── IDecoderSource.h            # Decoder source interface
 │   │           
 │   ├── rendering/                          # OpenGL rendering system
 │   │   ├── RenderContext.cpp               # Rendering context management
