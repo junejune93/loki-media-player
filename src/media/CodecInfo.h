@@ -33,7 +33,7 @@ struct CodecInfo {
         return !hasVideo && !hasAudio;
     }
 
-    static std::string formatBitrate(int64_t bitrate) {
+    static std::string formatBitrate(const int64_t bitrate) {
         if (bitrate <= 0) return "Unknown";
 
         if (bitrate >= 1000000) {
@@ -45,7 +45,7 @@ struct CodecInfo {
         }
     }
 
-    static std::string formatChannelLayout(int channels, uint64_t channel_layout) {
+    static std::string formatChannelLayout(const int channels, uint64_t channel_layout) {
         switch (channels) {
             case 1:
                 return "Mono";
@@ -60,7 +60,7 @@ struct CodecInfo {
         }
     }
 
-    static std::string formatSampleRate(int sampleRate) {
+    static std::string formatSampleRate(const int sampleRate) {
         if (sampleRate >= 1000) {
             return std::to_string(sampleRate / 1000) + " kHz";
         } else {
