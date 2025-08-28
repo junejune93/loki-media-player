@@ -4,6 +4,7 @@
 
 - Modern C++ multimedia player powered by FFmpeg and OpenGL
 - Cross-platform video and audio playback with hardware acceleration
+- CUDA-based hardware decoder support with NVDEC integration for accelerated H.264/H.265 decoding and GPU memory optimization
 - Real-time audio/video synchronization with advanced timing control
 - Designed for end-to-end solution
 - Designed for Docker-based execution (easy deployment and isolation)
