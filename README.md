@@ -38,6 +38,7 @@
 - Screen Recording: <span style="color:deepskyblue; font-weight:bold">MP4-based recording</span> with real-time screen capture and compression
 - Status Reporting: HTTP-based reporting with connection pool for real-time channel, sensor, synchronization monitoring <span style="color:deepskyblue; font-weight:bold">at 20-second intervals</span>
 - Frame Markers: I-Frame/P-Frame visual indicators with color-coded timeline markers for GOP structure analysis
+- Hardware Acceleration: CUDA-based hardware decoder support with NVDEC integration for accelerated H.264/H.265 decoding and GPU memory optimization
 
 ---
 
