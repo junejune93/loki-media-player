@@ -32,7 +32,7 @@ void MqttReportSource::updateChannelStatus(const std::vector<ChannelStatus> &cha
 
     // state send
     auto updateAndSend = [this]() {
-        std::string statusJson = buildStatusJson(_channels, _syncStatus, _sensorStatus);
+        const std::string statusJson = buildStatusJson(_channels, _syncStatus, _sensorStatus);
         sendStatus(statusJson);
     };
     updateAndSend();
@@ -44,7 +44,7 @@ void MqttReportSource::updateSyncStatus(const SyncStatus &status) {
 
     // state send
     auto updateAndSend = [this]() {
-        std::string statusJson = buildStatusJson(_channels, _syncStatus, _sensorStatus);
+        const std::string statusJson = buildStatusJson(_channels, _syncStatus, _sensorStatus);
         sendStatus(statusJson);
     };
     updateAndSend();
@@ -56,7 +56,7 @@ void MqttReportSource::updateSensorStatus(const SensorStatus &status) {
 
     // state send
     auto updateAndSend = [this]() {
-        std::string statusJson = buildStatusJson(_channels, _syncStatus, _sensorStatus);
+        const std::string statusJson = buildStatusJson(_channels, _syncStatus, _sensorStatus);
         sendStatus(statusJson);
     };
     updateAndSend();
@@ -73,7 +73,7 @@ void MqttReportSource::connect() {
             connOpts.set_keep_alive_interval(20);
             connOpts.set_clean_session(true);
 
-            auto token = _client->connect(connOpts);
+            const auto token = _client->connect(connOpts);
             token->wait();
             spdlog::info("Connected to MQTT broker at {}", _serverAddress);
             return true;
@@ -86,7 +86,7 @@ void MqttReportSource::connect() {
     attemptConnection();
 }
 
-void MqttReportSource::disconnect() {
+void MqttReportSource::disconnect() const {
     if (!_client || !_client->is_connected()) {
         return;
     }
@@ -107,16 +107,16 @@ void MqttReportSource::disconnect() {
 
 bool MqttReportSource::isConnected() const { return _client && _client->is_connected(); }
 
-void MqttReportSource::publish(const std::string &topic, const std::string &payload, int qos) {
+void MqttReportSource::publish(const std::string &topic, const std::string &payload, int qos) const {
     if (!_running || !isConnected()) {
         spdlog::warn("Cannot publish: MQTT client is not connected");
         return;
     }
 
     // publish
-    auto publish = [this](const std::string &topic, const std::string &payload, int qos) {
+    auto publish = [this](const std::string &topic, const std::string &payload, const int qos) {
         try {
-            auto message = mqtt::make_message(topic, payload, qos, false);
+            const auto message = mqtt::make_message(topic, payload, qos, false);
             _client->publish(message)->wait();
             return true;
         } catch (const mqtt::exception &e) {
@@ -128,14 +128,14 @@ void MqttReportSource::publish(const std::string &topic, const std::string &payl
     publish(topic, payload, qos);
 }
 
-void MqttReportSource::subscribe(const std::string &topic, int qos) {
+void MqttReportSource::subscribe(const std::string &topic, const int qos) const {
     if (!_running || !isConnected()) {
         spdlog::warn("Cannot subscribe: MQTT client is not connected");
         return;
     }
 
     // subscribe
-    auto subscribe = [this](const std::string &topic, int qos) {
+    auto subscribe = [this](const std::string &topic, const int qos) {
         try {
             _client->subscribe(topic, qos)->wait();
             spdlog::info("Subscribed to topic: {}", topic);
@@ -151,4 +151,4 @@ void MqttReportSource::subscribe(const std::string &topic, int qos) {
 
 void MqttReportSource::setMessageCallback(MessageCallback callback) { _messageCallback = std::move(callback); }
 
-void MqttReportSource::sendStatus(const std::string &statusJson) { publish("status", statusJson); }
+void MqttReportSource::sendStatus(const std::string &statusJson) const { publish("status", statusJson); }

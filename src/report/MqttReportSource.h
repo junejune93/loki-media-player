@@ -9,7 +9,7 @@
 #include <string>
 #include "report/interface/IReportSource.h"
 
-class MqttReportSource : public IReportSource {
+class MqttReportSource final : public IReportSource {
 public:
     using MessageCallback = std::function<void(const std::string &topic, const std::string &payload)>;
 
@@ -28,11 +28,11 @@ public:
     void updateSensorStatus(const SensorStatus &status) override;
 
 private:
-    class MqttCallback : public mqtt::callback {
+    class MqttCallback final : public mqtt::callback {
     public:
         explicit MqttCallback(MqttReportSource &parent) : _parent(parent) {}
 
-        void message_arrived(mqtt::const_message_ptr msg) override {
+        void message_arrived(const mqtt::const_message_ptr msg) override {
             if (_parent._messageCallback) {
                 _parent._messageCallback(msg->get_topic(), msg->get_payload_str());
             }
@@ -44,17 +44,17 @@ private:
 
     void connect();
 
-    void disconnect();
+    void disconnect() const;
 
     bool isConnected() const;
 
-    void publish(const std::string &topic, const std::string &payload, int qos = 1);
+    void publish(const std::string &topic, const std::string &payload, int qos = 1) const;
 
-    void subscribe(const std::string &topic, int qos = 1);
+    void subscribe(const std::string &topic, int qos = 1) const;
 
     void setMessageCallback(MessageCallback callback);
 
-    void sendStatus(const std::string &statusJson);
+    void sendStatus(const std::string &statusJson) const;
 
     // MQTT
     std::string _serverAddress;
