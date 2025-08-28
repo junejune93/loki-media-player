@@ -16,6 +16,33 @@ PKG_CHECK_MODULES(SWSCALE  REQUIRED libswscale)
 PKG_CHECK_MODULES(SWRESAMPLE REQUIRED libswresample)
 PKG_CHECK_MODULES(PORTAUDIO REQUIRED portaudio-2.0)
 
+# CUDA
+FIND_PACKAGE(CUDA REQUIRED)
+
+# CUDA DRIVER
+FIND_LIBRARY(CUDA_DRIVER_LIBRARY
+    NAMES cuda 
+    PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64 
+          ${CUDA_TOOLKIT_ROOT_DIR}/lib
+          /usr/local/cuda/lib64
+          /usr/local/cuda/lib
+          /usr/lib/x86_64-linux-gnu/
+    DOC "CUDA driver library"
+)
+
+SET(CUDA_LIBRARIES
+        ${CUDA_LIBRARIES}
+        ${CUDA_cudart_static_LIBRARY}
+        ${CUDA_rt_LIBRARY}
+        ${CUDA_DRIVER_LIBRARY}
+)
+
+# Add CUDA include directories
+include_directories(${CUDA_INCLUDE_DIRS})
+
+# Add CUDA driver API header path
+include_directories(/usr/local/cuda/include)
+
 # OpenGL, GLFW
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(glfw3 REQUIRED)
@@ -132,6 +159,7 @@ TARGET_LINK_LIBRARIES(loki_media_player
         cpprest-http-client-sdk
         ${PAHO_MQTT_CPP_LIB}
         ${PAHO_MQTT_C_LIB}
+        ${CUDA_LIBRARIES}
         ssl
         crypto
         pthread
