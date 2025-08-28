@@ -2,6 +2,10 @@
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 #include <utility>
+#include <algorithm>
+#include <cuda.h>
+#include <cuda_gl_interop.h>
+
 #include "AudioPlayer.h"
 #include "VideoRenderer.h"
 
@@ -77,22 +81,159 @@ void Decoder::initializeVideoDecoder() {
     }
 
     avcodec_parameters_to_context(_videoCtx, videoStream->codecpar);
-    const auto openResult = avcodec_open2(_videoCtx, videoCodec, nullptr);
+
+    // low latency
+    if (_config.enableLowLatency) {
+        _videoCtx->flags2 |= AV_CODEC_FLAG2_FAST;
+        _videoCtx->thread_type = FF_THREAD_FRAME;
+        _videoCtx->thread_count = (_config.maxThreads > 0) ? _config.maxThreads : 1;
+        _videoCtx->flags |= AV_CODEC_FLAG_LOW_DELAY;
+    }
+
+    // initialize(CUDA)
+    _useHW = (_config.decoderType == DecoderType::CUDA);
+    spdlog::info("GPU acceleration requested: {}", _useHW ? "Yes" : "No");
+    
+    if (_useHW) {
+        if (!initializeCudaDevice()) {
+            spdlog::warn("CUDA init failed; falling back to software decode.");
+            _useHW = false;
+        } else {
+            _videoCtx->get_format = &Decoder::getHWFormat;
+            spdlog::warn("CUDA init success;");
+        }
+    }
+
+    int openResult = avcodec_open2(_videoCtx, videoCodec, nullptr);
     if (openResult < 0) {
         throw std::runtime_error("Failed to open video codec");
     }
 
+    if (_useHW) {
+        if (!initializeCudaFrames(_videoCtx)) {
+            _useHW = false;
+        }
+    }
+
     _videoTimeBase = videoStream->time_base;
 
-    initializeVideoScaler();
+    // fixel format
+    AVPixelFormat srcFmt = AV_PIX_FMT_YUV420P;
+    if (_useHW) {
+        srcFmt = pickSWFormatForCuda(_videoCtx->sw_pix_fmt);
+        spdlog::info("Using HW pixel format: {}", av_get_pix_fmt_name(srcFmt));
+    } else {
+        srcFmt = _videoCtx->pix_fmt;
+        spdlog::info("Using SW pixel format: {}", av_get_pix_fmt_name(srcFmt));
+    }
+
+    initializeVideoScaler(srcFmt);
 }
 
-void Decoder::initializeVideoScaler() {
-    _swsCtx = sws_getContext(_videoCtx->width, _videoCtx->height, _videoCtx->pix_fmt, _videoCtx->width,
-                             _videoCtx->height, AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr, nullptr, nullptr);
+bool Decoder::initializeCudaDevice() {
+    const char* device = _config.hwDevice.empty() ? "default" : _config.hwDevice.c_str();
+    spdlog::info("Initializing CUDA device: {}", device);
+    
+    int nb_devices = 0;
+    auto cuda_ret = cuInit(0);
+    if (cuda_ret == CUDA_SUCCESS) {
+        cuDeviceGetCount(&nb_devices);
+        spdlog::info("Found {} CUDA capable device(s)", nb_devices);
+        
+        for (int i = 0; i < nb_devices; i++) {
+            char name[256];
+            CUdevice dev;
+            cuDeviceGet(&dev, i);
+            cuDeviceGetName(name, sizeof(name), dev);
+            int major = 0, minor = 0;
+            cuDeviceGetAttribute(&major, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, dev);
+            cuDeviceGetAttribute(&minor, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, dev);
+            spdlog::info("  Device {}: {} (Compute {}.{})", i, name, major, minor);
+        }
+    }
+    
+    AVDictionary *options = nullptr;
+    if (!_config.hwDevice.empty()) {
+        av_dict_set(&options, "device", _config.hwDevice.c_str(), 0);
+    }
+    
+    int err = av_hwdevice_ctx_create(&_hwDeviceCtx, AV_HWDEVICE_TYPE_CUDA,
+                                   _config.hwDevice.empty() ? nullptr : _config.hwDevice.c_str(),
+                                   options, 0);
+    av_dict_free(&options);
+    
+    if (err < 0) {
+        return false;
+    }
+
+    return true;
+}
+
+bool Decoder::initializeCudaFrames(AVCodecContext* ctx) {
+    if (!_hwDeviceCtx) {
+        return false;
+    }
+
+    ctx->hw_device_ctx = av_buffer_ref(_hwDeviceCtx);
+    if (!ctx->hw_device_ctx) {
+        return false;
+    }
+
+    return true;
+}
+
+AVPixelFormat Decoder::pickSWFormatForCuda(AVPixelFormat hw_mapped) {
+    if (hw_mapped == AV_PIX_FMT_NV12 || hw_mapped == AV_PIX_FMT_P010) {
+        return hw_mapped;
+    }
+    return AV_PIX_FMT_NV12;
+}
+
+enum AVPixelFormat Decoder::getHWFormat(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts) {
+    for (const enum AVPixelFormat *p = pix_fmts; *p != AV_PIX_FMT_NONE; ++p) {
+        spdlog::debug("  - {}", av_get_pix_fmt_name(*p));
+        if (*p == AV_PIX_FMT_CUDA) {
+            spdlog::info("Using HW pixel format: {}", av_get_pix_fmt_name(*p));
+            return *p;
+        }
+    }
+    return pix_fmts[0];
+}
+
+void Decoder::initializeVideoScaler(AVPixelFormat srcFmt) {
+    if (_swsCtx) {
+        sws_freeContext(_swsCtx);
+        _swsCtx = nullptr;
+    }
+
+    int width = (_videoCtx && _videoCtx->width > 0) ? _videoCtx->width : 640;
+    int height = (_videoCtx && _videoCtx->height > 0) ? _videoCtx->height : 480;
+
+    _swsCtx = sws_getContext(width, height, srcFmt,
+                             width, height, AV_PIX_FMT_RGB24,
+                             SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (!_swsCtx) {
         throw std::runtime_error("Failed to create video scaler context");
     }
+
+    _currentScaleSrcFmt = srcFmt;
+}
+
+void Decoder::recreateVideoScalerIfNeeded(AVPixelFormat srcFmt, int w, int h) {
+    if (_swsCtx && srcFmt == _currentScaleSrcFmt && w == _videoCtx->width && h == _videoCtx->height) {
+        return;
+    }
+
+    if (_swsCtx) {
+        sws_freeContext(_swsCtx);
+        _swsCtx = nullptr;
+    }
+
+    _swsCtx = sws_getContext(w, h, srcFmt, w, h, AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr, nullptr, nullptr);
+    if (!_swsCtx) {
+        throw std::runtime_error("Failed to recreate video scaler context");
+    }
+    _currentScaleSrcFmt = srcFmt;
 }
 
 void Decoder::initializeAudioDecoder() {
@@ -148,7 +289,7 @@ void Decoder::initializeAudioResampler(AVStream *audioStream) {
 
     const auto initResult = swr_init(_swrCtx);
     if (initResult < 0) {
-        std::runtime_error("Failed to initialize audio resampler");
+        throw std::runtime_error("Failed to initialize audio resampler");
     }
 }
 
@@ -408,6 +549,29 @@ void Decoder::startDecoding() {
 
         av_packet_unref(packet.get());
     }
+
+    if (_videoCtx) {
+        avcodec_send_packet(_videoCtx, nullptr);
+        while (avcodec_receive_frame(_videoCtx, videoFrame.get()) >= 0) {
+            auto videoFrameOpt = createVideoFrame(videoFrame.get(), state);
+            if (videoFrameOpt.has_value()) {
+                syncVideoFrame(*videoFrameOpt, state);
+                _videoQueue.push(std::move(*videoFrameOpt));
+            }
+            av_frame_unref(videoFrame.get());
+        }
+    }
+
+    if (_audioCtx) {
+        avcodec_send_packet(_audioCtx, nullptr);
+        while (avcodec_receive_frame(_audioCtx, audioFrame.get()) >= 0) {
+            auto audioFrameOpt = createAudioFrame(audioFrame.get(), state);
+            if (audioFrameOpt.has_value()) {
+                _audioQueue.push(std::move(*audioFrameOpt));
+            }
+            av_frame_unref(audioFrame.get());
+        }
+    }
 }
 
 bool Decoder::handleSeekRequest(DecodingState &state) {
@@ -442,33 +606,85 @@ bool Decoder::waitForQueueSpace() const {
 }
 
 void Decoder::decodeAudioPacket(AVPacket *packet, AVFrame *frame, DecodingState &state) {
+    if (!_audioCtx) {
+        return;
+    }
+
     if (avcodec_send_packet(_audioCtx, packet) < 0) {
         return;
     }
 
     while (avcodec_receive_frame(_audioCtx, frame) >= 0) {
-        auto audioFrame = createAudioFrame(frame, state);
-        if (audioFrame.has_value()) {
-            _audioQueue.push(std::move(*audioFrame));
+        auto audioFrameOpt = createAudioFrame(frame, state);
+        if (audioFrameOpt.has_value()) {
+            _audioQueue.push(std::move(*audioFrameOpt));
         }
+        av_frame_unref(frame);
     }
 }
 
 void Decoder::decodeVideoPacket(AVPacket *packet, AVFrame *frame, DecodingState &state) {
-    if (avcodec_send_packet(_videoCtx, packet) < 0) {
+    int ret = avcodec_send_packet(_videoCtx, packet);
+    if (ret < 0) {
         return;
     }
 
+    auto frame_deleter = [](AVFrame *f){ av_frame_free(&f); };
+    std::unique_ptr<AVFrame, decltype(frame_deleter)> swFrame(nullptr, frame_deleter);
+
     while (avcodec_receive_frame(_videoCtx, frame) >= 0) {
-        auto videoFrame = createVideoFrame(frame, state);
-        if (videoFrame.has_value()) {
-            syncVideoFrame(*videoFrame, state);
-            _videoQueue.push(std::move(*videoFrame));
+        AVFrame *src = frame;
+        auto scaleSrcFmt = static_cast<AVPixelFormat>(frame->format);
+        int width = frame->width;
+        int height = frame->height;
+
+        if (_useHW && frame->format == AV_PIX_FMT_CUDA) {
+            spdlog::debug("Decoded CUDA frame - format: {}, width: {}, height: {}, pts: {}",
+                        av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)),
+                        frame->width, frame->height, frame->pts);
+                        
+            swFrame.reset(av_frame_alloc());
+            if (!swFrame) {
+                av_frame_unref(frame);
+                continue;
+            }
+
+            int transferErr = av_hwframe_transfer_data(swFrame.get(), frame, 0);
+            if (transferErr < 0) {
+                av_frame_unref(frame);
+                continue;
+            }
+
+            src = swFrame.get();
+            scaleSrcFmt = pickSWFormatForCuda(static_cast<AVPixelFormat>(swFrame->format));
+            width = swFrame->width;
+            height = swFrame->height;
+        } else {
+            scaleSrcFmt = static_cast<AVPixelFormat>(frame->format);
+            width = frame->width;
+            height = frame->height;
+        }
+
+        recreateVideoScalerIfNeeded(scaleSrcFmt, width, height);
+
+        auto videoFrameOpt = createVideoFrame(src, state);
+        if (videoFrameOpt.has_value()) {
+            syncVideoFrame(*videoFrameOpt, state);
+            _videoQueue.push(std::move(*videoFrameOpt));
+        }
+
+        av_frame_unref(frame);
+        if (swFrame) {
+            av_frame_unref(swFrame.get());
         }
     }
 }
 
 std::optional<AudioFrame> Decoder::createAudioFrame(AVFrame *frame, DecodingState &state) {
+    if (!frame || !_swrCtx) {
+        return std::nullopt;
+    }
+
     AudioFrame audioFrame;
     audioFrame.sampleRate = _audioCtx->sample_rate;
     audioFrame.channels = 2;
@@ -486,6 +702,10 @@ std::optional<AudioFrame> Decoder::createAudioFrame(AVFrame *frame, DecodingStat
     const int outSamples = swr_get_out_samples(_swrCtx, frame->nb_samples);
     const int outBytes = av_samples_get_buffer_size(nullptr, audioFrame.channels, outSamples, AV_SAMPLE_FMT_S16, 1);
 
+    if (outBytes <= 0) {
+        return std::nullopt;
+    }
+
     audioFrame.data.resize(outBytes);
     uint8_t *outData[1] = {audioFrame.data.data()};
 
@@ -496,13 +716,17 @@ std::optional<AudioFrame> Decoder::createAudioFrame(AVFrame *frame, DecodingStat
         return std::nullopt;
     }
 
-    audioFrame.data.resize(convertedSamples * audioFrame.channels * sizeof(int16_t));
+    audioFrame.data.resize(convertedSamples * audioFrame.channels * static_cast<int>(sizeof(int16_t)));
     audioFrame.samples = convertedSamples;
 
     return audioFrame;
 }
 
 std::optional<VideoFrame> Decoder::createVideoFrame(AVFrame *frame, const DecodingState &state) {
+    if (!frame || !_swsCtx) {
+        return std::nullopt;
+    }
+
     VideoFrame videoFrame;
     videoFrame.width = frame->width;
     videoFrame.height = frame->height;
@@ -562,6 +786,11 @@ void Decoder::cleanup() {
 
     if (_swrCtx) {
         swr_free(&_swrCtx);
+    }
+
+    if (_hwDeviceCtx) {
+        av_buffer_unref(&_hwDeviceCtx);
+        _hwDeviceCtx = nullptr;
     }
 
     if (_fmtCtx) {

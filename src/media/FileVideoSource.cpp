@@ -4,7 +4,7 @@
 #include <spdlog/spdlog.h>
 
 FileVideoSource::FileVideoSource(const std::string &filename, IDecoderSource::DecoderConfig config)
-    : _decoder(std::make_unique<Decoder>(filename)) {
+    : _decoder(std::make_unique<Decoder>(filename, config)) {
     _outputDir = "record";
     std::filesystem::create_directories(_outputDir);
 }

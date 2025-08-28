@@ -6,6 +6,10 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <mutex>
+#include <vector>
+#include <memory>
+
 #include "AudioFrame.h"
 #include "ThreadSafeQueue.h"
 #include "VideoFrame.h"
@@ -21,6 +25,9 @@ extern "C" {
 #include <libavutil/channel_layout.h>
 #include <libavutil/imgutils.h>
 #include <libavutil/opt.h>
+#include <libavutil/error.h>
+#include <libavutil/hwcontext.h>
+#include <libavutil/hwcontext_cuda.h>
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
 }
@@ -62,7 +69,7 @@ private:
     void findStreams();
     void scanFrameTypes();
     void initializeVideoDecoder();
-    void initializeVideoScaler();
+    void initializeVideoScaler(AVPixelFormat srcFmt);
     void initializeAudioDecoder();
     void initializeAudioResampler(AVStream *audioStream);
 
@@ -70,8 +77,8 @@ private:
     void extractContainerFormat();
     void extractVideoInfo();
     void extractAudioInfo();
-    static std::string normalizeVideoCodecName(const std::string &codecName) ;
-    static std::string normalizeAudioCodecName(const std::string &codecName) ;
+    static std::string normalizeVideoCodecName(const std::string &codecName);
+    static std::string normalizeAudioCodecName(const std::string &codecName);
 
     void scanForFrameTypes(AVFormatContext *fmtCtx, int videoStreamIndex, std::vector<double> &timestamps);
     void clearFrameTimestamps();
@@ -90,6 +97,14 @@ private:
 
     void cleanup();
 
+    // CUDA
+    static enum AVPixelFormat getHWFormat(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts);
+    bool initializeCudaDevice();
+    bool initializeCudaFrames(AVCodecContext *ctx);
+    static AVPixelFormat pickSWFormatForCuda(AVPixelFormat hw_mapped);
+    void recreateVideoScalerIfNeeded(AVPixelFormat srcFmt, int w, int h);
+
+private:
     std::string filename;
     DecoderConfig _config;
 
@@ -117,6 +132,11 @@ private:
     std::vector<double> _pFrameTimestamps;
     mutable std::mutex _iFrameTimestampsMutex;
     mutable std::mutex _pFrameTimestampsMutex;
+
+    // CUDA
+    AVBufferRef* _hwDeviceCtx{nullptr};
+    AVPixelFormat _currentScaleSrcFmt{AV_PIX_FMT_NONE};
+    bool _useHW{false};
 
     static constexpr int8_t MAX_QUEUE_SIZE = 50;
 };
