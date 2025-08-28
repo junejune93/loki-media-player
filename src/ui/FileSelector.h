@@ -16,7 +16,7 @@ public:
         return _visible;
     }
 
-    void setVisible(bool v) {
+    void setVisible(const bool v) {
         _visible = v;
     }
 
