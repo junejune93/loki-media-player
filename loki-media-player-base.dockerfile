@@ -26,6 +26,13 @@ RUN apt-get update && apt-get install -y \
     libcpprest-dev \
     mosquitto \
     mosquitto-clients \
+    librt-dev \
+    libdl-dev \
+    nvidia-cuda-toolkit \
+    nvidia-cuda-dev \
+    libcuda1 \
+    cuda-driver-dev \
+    cuda-runtime-11-8 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null \
