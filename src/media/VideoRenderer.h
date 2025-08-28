@@ -19,7 +19,7 @@ public:
 
     VideoRenderer &operator=(const VideoRenderer &) = delete;
 
-    void renderFrame(const VideoFrame &frame);
+    void renderFrame(const VideoFrame &frame) const;
 
 private:
     GLFWwindow *_window{nullptr};

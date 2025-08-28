@@ -57,7 +57,7 @@ VideoRenderer &VideoRenderer::operator=(VideoRenderer &&other) noexcept {
     return *this;
 }
 
-void VideoRenderer::renderFrame(const VideoFrame &frame) {
+void VideoRenderer::renderFrame(const VideoFrame &frame) const {
     if (frame.data.empty()) {
         return;
     }
