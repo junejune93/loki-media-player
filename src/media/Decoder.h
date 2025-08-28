@@ -32,6 +32,26 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+struct SeekRequest {
+    std::atomic<bool> requested{false};
+    std::atomic<double> target{0.0};
+
+    void set(double time) {
+        target.store(time);
+        requested.store(true);
+    }
+
+    std::pair<bool, double> get() {
+        bool req = requested.load();
+        if (req) {
+            return {true, target.load()};
+        }
+        return {false, 0.0};
+    }
+
+    void clear() { requested.store(false); }
+};
+
 class Decoder : public IDecoderSource {
 public:
     explicit Decoder(std::string filename, const DecoderConfig &config = {});
@@ -96,6 +116,7 @@ private:
     void syncVideoFrame(const VideoFrame &videoFrame, const DecodingState &state);
 
     void cleanup();
+    int getMaxQueueSize() const;
 
     // CUDA
     static enum AVPixelFormat getHWFormat(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts);
@@ -124,8 +145,8 @@ private:
 
     std::thread _decodeThread;
     std::atomic<bool> _decodeRunning{false};
-    std::atomic<bool> _seekRequested{false};
-    std::atomic<double> _seekTarget{0.0};
+
+    SeekRequest _seekRequest;
 
     CodecInfo _codecInfo;
     std::vector<double> _iFrameTimestamps;
@@ -134,9 +155,14 @@ private:
     mutable std::mutex _pFrameTimestampsMutex;
 
     // CUDA
-    AVBufferRef* _hwDeviceCtx{nullptr};
+    AVBufferRef *_hwDeviceCtx{nullptr};
     AVPixelFormat _currentScaleSrcFmt{AV_PIX_FMT_NONE};
     bool _useHW{false};
 
-    static constexpr int8_t MAX_QUEUE_SIZE = 50;
+    mutable std::mutex _swsCtxMutex;
+    mutable std::mutex _cudaMutex;
+    mutable std::mutex _swrCtxMutex;
+
+    static constexpr int8_t MAX_QUEUE_SIZE_HD = 50;
+    static constexpr int8_t MAX_QUEUE_SIZE_4K = 20;
 };
