@@ -39,7 +39,7 @@ struct OSDState {
         std::string source;
         std::chrono::steady_clock::time_point timestamp;
         
-        void update(double temp, double hum, double accel, const std::string& src) {
+        void update(const double temp, const double hum, const double accel, const std::string& src) {
             temperature = temp;
             humidity = hum;
             acceleration = accel;
@@ -48,7 +48,7 @@ struct OSDState {
         }
         
         std::string getFormattedTimeSinceUpdate() const {
-            auto now = std::chrono::steady_clock::now();
+            const auto now = std::chrono::steady_clock::now();
             auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - timestamp).count();
             
             if (diff < 1000) {
@@ -73,11 +73,11 @@ struct OSDState {
     }
 
     void updateFade() {
-        auto now = std::chrono::steady_clock::now();
+        const auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastInteraction).count();
 
         if (elapsed > 3000) {
-            auto fadeTime = ((float) elapsed - 3000) / 2000.0f;
+            const auto fadeTime = (static_cast<float>(elapsed) - 3000) / 2000.0f;
             fadeAlpha = std::max(0.3f, 1.0f - fadeTime);
         } else {
             fadeAlpha = 1.0f;
@@ -96,9 +96,9 @@ struct OSDState {
     }
 
     static std::string formatTime(double seconds) {
-        int hours = static_cast<int>(seconds) / 3600;
-        int minutes = (static_cast<int>(seconds) % 3600) / 60;
-        int secs = static_cast<int>(seconds) % 60;
+        const int hours = static_cast<int>(seconds) / 3600;
+        const int minutes = (static_cast<int>(seconds) % 3600) / 60;
+        const int secs = static_cast<int>(seconds) % 60;
 
         if (hours > 0) {
             // HH:MM:SS
@@ -136,10 +136,10 @@ private:
                     start++;
                 }
 
-                std::string percentStr = result.substr(start, percentPos - start);
+                const std::string percentStr = result.substr(start, percentPos - start);
 
                 std::string cleanPercent;
-                for (char c: percentStr) {
+                for (const char c: percentStr) {
                     if (std::isdigit(c)) {
                         cleanPercent += c;
                     }
@@ -158,11 +158,11 @@ private:
         try {
             std::string result = executeCommand("amixer get Master 2>/dev/null");
 
-            size_t start = result.find('[');
+            const size_t start = result.find('[');
             size_t end = result.find('%', start);
 
             if (start != std::string::npos && end != std::string::npos) {
-                std::string percentStr = result.substr(start + 1, end - start - 1);
+                const std::string percentStr = result.substr(start + 1, end - start - 1);
                 return std::stof(percentStr) / 100.0f;
             }
         } catch (const std::exception &e) {
@@ -188,7 +188,7 @@ private:
         std::array<char, 128> buffer{};
         std::string result;
 
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
+        const std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
         if (!pipe) {
             throw std::runtime_error("popen() failed!");
         }
