@@ -25,7 +25,7 @@ public:
 
     void setOnFileSelected(const std::function<void(const std::string &)> &cb);
 
-    FileSelector *getFileSelector() { return _fileSelector.get(); }
+    FileSelector *getFileSelector() const { return _fileSelector.get(); }
 
     // OSD
     void updateOSDData(
@@ -45,9 +45,9 @@ public:
     void setWindowSize(int width, int height);
 
     // Record
-    void setStartRecordingCallback(std::function<bool()> cb);
-    void setStopRecordingCallback(std::function<void()> cb);
-    void setRecordingState(bool isRecording);
+    void setStartRecordingCallback(std::function<bool()> cb) const;
+    void setStopRecordingCallback(std::function<void()> cb) const;
+    void setRecordingState(bool isRecording) const;
 
 private:
     static void setupStyle();

@@ -1,16 +1,18 @@
-#include <filesystem>
 #include "UIManager.h"
+#include <filesystem>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
 UIManager::UIManager() = default;
 
-UIManager::~UIManager() {
-    shutdown();
-}
+UIManager::~UIManager() { shutdown(); }
 
 bool UIManager::initialize(GLFWwindow *window) {
+    if (!window) {
+        return false;
+    }
+
     if (_initialized) {
         return true;
     }
@@ -30,7 +32,7 @@ bool UIManager::initialize(GLFWwindow *window) {
 
     std::vector<std::string> files;
     std::string assetsPath = "../assets/";
-    for (const auto& entry : std::filesystem::directory_iterator(assetsPath)) {
+    for (const auto &entry: std::filesystem::directory_iterator(assetsPath)) {
         if (entry.is_regular_file()) {
             files.push_back(entry.path().string());
         }
@@ -103,16 +105,11 @@ void UIManager::render() {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void UIManager::updateOSDData(
-    const MediaState &mediaState, 
-    const CodecInfo &codecInfo, 
-    const std::string &fileName,
-    double temperature,
-    double humidity,
-    double acceleration,
-    const std::string &sensorSource
-) {
-    if (!_initialized) return;
+void UIManager::updateOSDData(const MediaState &mediaState, const CodecInfo &codecInfo, const std::string &fileName,
+                              const double temperature, const double humidity, const double acceleration,
+                              const std::string &sensorSource) {
+    if (!_initialized)
+        return;
 
     _osdState.currentTime = mediaState.currentTime;
     _osdState.totalDuration = mediaState.duration;
@@ -126,7 +123,7 @@ void UIManager::updateOSDData(
 
     _osdState.codecInfo = codecInfo;
     _osdState.syncStatus = (mediaState.audioVideoSyncOffset < 40) ? "Synced" : "Out of Sync";
-    
+
     // Update sensor data
     _osdState.sensorReadings.update(temperature, humidity, acceleration, sensorSource);
 }
@@ -141,7 +138,7 @@ void UIManager::handleOSDInput(GLFWwindow *window) {
     }
 }
 
-void UIManager::setWindowSize(int width, int height) {
+void UIManager::setWindowSize(const int width, const int height) {
     if (_controlPanel) {
         _controlPanel->setWindowSize(width, height);
     }
@@ -149,10 +146,10 @@ void UIManager::setWindowSize(int width, int height) {
     _windowHeight = height;
 }
 
-void UIManager::setStartRecordingCallback(std::function<bool()> cb) {
+void UIManager::setStartRecordingCallback(std::function<bool()> cb) const {
     if (_controlPanel) {
         _controlPanel->setStartRecordingCallback([this, cb]() {
-            bool success = cb();
+            const bool success = cb();
             if (success) {
                 _controlPanel->setRecordingState(true);
             }
@@ -161,7 +158,7 @@ void UIManager::setStartRecordingCallback(std::function<bool()> cb) {
     }
 }
 
-void UIManager::setStopRecordingCallback(std::function<void()> cb) {
+void UIManager::setStopRecordingCallback(std::function<void()> cb) const {
     if (_controlPanel) {
         _controlPanel->setStopRecordingCallback([this, cb]() {
             cb();
@@ -170,7 +167,7 @@ void UIManager::setStopRecordingCallback(std::function<void()> cb) {
     }
 }
 
-void UIManager::setRecordingState(bool isRecording) {
+void UIManager::setRecordingState(const bool isRecording) const {
     if (_controlPanel) {
         _controlPanel->setRecordingState(isRecording);
     }
