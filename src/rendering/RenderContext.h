@@ -11,15 +11,15 @@ public:
 
     bool initialize();
 
-    void makeCurrent();
+    void makeCurrent() const;
 
-    void swapBuffers();
+    void swapBuffers() const;
 
-    void setViewport(int x, int y, int width, int height);
+    static void setViewport(int x, int y, int width, int height);
 
-    void clearColor(float r, float g, float b, float a = 1.0f);
+    static void clearColor(float r, float g, float b, float a = 1.0f);
 
-    void clear(GLbitfield mask = GL_COLOR_BUFFER_BIT);
+    static void clear(GLbitfield mask = GL_COLOR_BUFFER_BIT);
 
     GLFWwindow *getWindow() const { return _renderWindow; }
 

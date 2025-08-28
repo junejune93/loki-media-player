@@ -33,26 +33,26 @@ bool RenderContext::initialize() {
     return true;
 }
 
-void RenderContext::makeCurrent() {
+void RenderContext::makeCurrent() const {
     if (_renderWindow) {
         glfwMakeContextCurrent(_renderWindow);
     }
 }
 
-void RenderContext::swapBuffers() {
+void RenderContext::swapBuffers() const {
     if (_renderWindow) {
         glfwSwapBuffers(_renderWindow);
     }
 }
 
-void RenderContext::setViewport(int x, int y, int width, int height) {
+void RenderContext::setViewport(const int x, const int y, const int width, const int height) {
     glViewport(x, y, width, height);
 }
 
-void RenderContext::clearColor(float r, float g, float b, float a) {
+void RenderContext::clearColor(const float r, const float g, const float b, const float a) {
     glClearColor(r, g, b, a);
 }
 
-void RenderContext::clear(GLbitfield mask) {
+void RenderContext::clear(const GLbitfield mask) {
     glClear(mask);
 }
