@@ -20,7 +20,7 @@ struct VideoFrame {
 
     VideoFrame &operator=(const VideoFrame &) = default;
 
-    VideoFrame(int w, int h, double t, std::vector<uint8_t> &&d)
+    VideoFrame(const int w, const int h, const double t, std::vector<uint8_t> &&d)
             : width(w),
               height(h),
               pts(t),
