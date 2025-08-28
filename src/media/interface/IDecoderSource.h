@@ -11,7 +11,8 @@ class IDecoderSource {
 public:
     enum class DecoderType {
         NONE,
-        SW
+        SW,
+        CUDA
     };
 
     struct DecoderConfig {
