@@ -37,4 +37,13 @@ sudo apt install -y \
     libstdc++6 \
     libc6-dev \
     mosquitto \
-    mosquitto-clients
+    mosquitto-clients \
+    nvidia-cuda-toolkit \
+    nvidia-cuda-dev \
+    libcuda1 \
+    cuda-driver-dev \
+    cuda-runtime-11-8 \
+    libcpprest-dev \
+    libboost-all-dev \
+    librt-dev \
+    libdl-dev
