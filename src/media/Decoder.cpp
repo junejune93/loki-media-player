@@ -1,15 +1,15 @@
 #include "Decoder.h"
+#include <algorithm>
+#include <cuda.h>
+#include <libavutil/opt.h>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 #include <utility>
-#include <algorithm>
-#include <cuda.h>
-#include <cuda_gl_interop.h>
 
 #include "AudioPlayer.h"
 #include "VideoRenderer.h"
 
-Decoder::Decoder(std::string file, const DecoderConfig &config) : filename(std::move(file)), _config(config) {
+Decoder::Decoder(std::string file, DecoderConfig config) : filename(std::move(file)), _config(std::move(config)) {
     initializeFFmpeg();
 
     openInputFile();
@@ -172,8 +172,8 @@ bool Decoder::initializeCudaDevice() {
     return true;
 }
 
-bool Decoder::initializeCudaFrames(AVCodecContext *ctx) {
-    if (!_hwDeviceCtx) {
+bool Decoder::initializeCudaFrames(AVCodecContext *ctx) const {
+    if (!ctx) {
         return false;
     }
 
@@ -211,8 +211,8 @@ void Decoder::initializeVideoScaler(AVPixelFormat srcFmt) {
         _swsCtx = nullptr;
     }
 
-    int width = (_videoCtx && _videoCtx->width > 0) ? _videoCtx->width : 640;
-    int height = (_videoCtx && _videoCtx->height > 0) ? _videoCtx->height : 480;
+    const int width = (_videoCtx && _videoCtx->width > 0) ? _videoCtx->width : 640;
+    const int height = (_videoCtx && _videoCtx->height > 0) ? _videoCtx->height : 480;
 
     _swsCtx = sws_getContext(width, height, srcFmt, width, height, AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr, nullptr,
                              nullptr);
@@ -276,7 +276,7 @@ void Decoder::initializeAudioDecoder() {
     initializeAudioResampler(audioStream);
 }
 
-void Decoder::initializeAudioResampler(AVStream *audioStream) {
+void Decoder::initializeAudioResampler(const AVStream *audioStream) {
     std::lock_guard<std::mutex> lock(_swrCtxMutex);
 
     uint64_t inputChannelLayout = audioStream->codecpar->channel_layout;
@@ -462,12 +462,12 @@ void Decoder::addPFrameTimestamp(double pts) {
 void Decoder::sortFrameTimestamps() {
     {
         std::lock_guard<std::mutex> lock(_iFrameTimestampsMutex);
-        std::sort(_iFrameTimestamps.begin(), _iFrameTimestamps.end());
+        std::ranges::sort(_iFrameTimestamps);
     }
 
     {
         std::lock_guard<std::mutex> lock(_pFrameTimestampsMutex);
-        std::sort(_pFrameTimestamps.begin(), _pFrameTimestamps.end());
+        std::ranges::sort(_pFrameTimestamps);
     }
 }
 
@@ -569,7 +569,6 @@ void Decoder::startDecoding() {
     }
 
     DecodingState state;
-    const int maxQueueSize = getMaxQueueSize();
     bool eof = false;
 
     while (_decodeRunning.load() && !eof) {
@@ -662,7 +661,7 @@ bool Decoder::waitForQueueSpace() const {
     return _decodeRunning.load();
 }
 
-void Decoder::decodeAudioPacket(AVPacket *packet, AVFrame *frame, DecodingState &state) {
+void Decoder::decodeAudioPacket(const AVPacket *packet, AVFrame *frame, DecodingState &state) {
     if (!_audioCtx) {
         return;
     }
@@ -680,7 +679,7 @@ void Decoder::decodeAudioPacket(AVPacket *packet, AVFrame *frame, DecodingState 
     }
 }
 
-void Decoder::decodeVideoPacket(AVPacket *packet, AVFrame *frame, DecodingState &state) {
+void Decoder::decodeVideoPacket(const AVPacket *packet, AVFrame *frame, const DecodingState &state) {
     int ret = avcodec_send_packet(_videoCtx, packet);
     if (ret < 0) {
         return;
@@ -738,7 +737,7 @@ void Decoder::decodeVideoPacket(AVPacket *packet, AVFrame *frame, DecodingState 
     }
 }
 
-std::optional<AudioFrame> Decoder::createAudioFrame(AVFrame *frame, DecodingState &state) {
+std::optional<AudioFrame> Decoder::createAudioFrame(const AVFrame *frame, DecodingState &state) const {
     if (!frame || !_swrCtx) {
         return std::nullopt;
     }
@@ -785,7 +784,7 @@ std::optional<AudioFrame> Decoder::createAudioFrame(AVFrame *frame, DecodingStat
     return audioFrame;
 }
 
-std::optional<VideoFrame> Decoder::createVideoFrame(AVFrame *frame, const DecodingState &state) {
+std::optional<VideoFrame> Decoder::createVideoFrame(const AVFrame *frame, const DecodingState &state) const {
     if (!frame || !_swsCtx) {
         return std::nullopt;
     }

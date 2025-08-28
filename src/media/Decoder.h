@@ -5,7 +5,6 @@
 #include <optional>
 #include <string>
 #include <thread>
-#include <unordered_map>
 #include <mutex>
 #include <vector>
 #include <memory>
@@ -36,14 +35,13 @@ struct SeekRequest {
     std::atomic<bool> requested{false};
     std::atomic<double> target{0.0};
 
-    void set(double time) {
+    void set(const double time) {
         target.store(time);
         requested.store(true);
     }
 
-    std::pair<bool, double> get() {
-        bool req = requested.load();
-        if (req) {
+    std::pair<bool, double> get() const {
+        if (bool req = requested.load()) {
             return {true, target.load()};
         }
         return {false, 0.0};
@@ -52,9 +50,9 @@ struct SeekRequest {
     void clear() { requested.store(false); }
 };
 
-class Decoder : public IDecoderSource {
+class Decoder final : public IDecoderSource {
 public:
-    explicit Decoder(std::string filename, const DecoderConfig &config = {});
+    explicit Decoder(std::string filename, DecoderConfig config = {});
     ~Decoder() override;
 
     void start() override;
@@ -84,14 +82,14 @@ private:
         }
     };
 
-    void initializeFFmpeg();
+    static void initializeFFmpeg();
     void openInputFile();
     void findStreams();
     void scanFrameTypes();
     void initializeVideoDecoder();
     void initializeVideoScaler(AVPixelFormat srcFmt);
     void initializeAudioDecoder();
-    void initializeAudioResampler(AVStream *audioStream);
+    void initializeAudioResampler(const AVStream *audioStream);
 
     void initializeCodecInfo();
     void extractContainerFormat();
@@ -109,11 +107,11 @@ private:
     void startDecoding();
     bool handleSeekRequest(DecodingState &state);
     bool waitForQueueSpace() const;
-    void decodeAudioPacket(AVPacket *packet, AVFrame *frame, DecodingState &state);
-    void decodeVideoPacket(AVPacket *packet, AVFrame *frame, DecodingState &state);
-    std::optional<AudioFrame> createAudioFrame(AVFrame *frame, DecodingState &state);
-    std::optional<VideoFrame> createVideoFrame(AVFrame *frame, const DecodingState &state);
-    void syncVideoFrame(const VideoFrame &videoFrame, const DecodingState &state);
+    void decodeAudioPacket(const AVPacket *packet, AVFrame *frame, DecodingState &state);
+    void decodeVideoPacket(const AVPacket *packet, AVFrame *frame, const DecodingState &state);
+    std::optional<AudioFrame> createAudioFrame(const AVFrame *frame, DecodingState &state) const;
+    std::optional<VideoFrame> createVideoFrame(const AVFrame *frame, const DecodingState &state) const;
+    static void syncVideoFrame(const VideoFrame &videoFrame, const DecodingState &state);
 
     void cleanup();
     int getMaxQueueSize() const;
@@ -121,7 +119,7 @@ private:
     // CUDA
     static enum AVPixelFormat getHWFormat(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts);
     bool initializeCudaDevice();
-    bool initializeCudaFrames(AVCodecContext *ctx);
+    bool initializeCudaFrames(AVCodecContext *ctx) const;
     static AVPixelFormat pickSWFormatForCuda(AVPixelFormat hw_mapped);
     void recreateVideoScalerIfNeeded(AVPixelFormat srcFmt, int w, int h);
 
