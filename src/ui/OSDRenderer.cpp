@@ -8,7 +8,7 @@ OSDRenderer::OSDRenderer() {
 
 OSDRenderer::~OSDRenderer() = default;
 
-void OSDRenderer::render(const OSDState &state, int windowWidth, int windowHeight) {
+void OSDRenderer::render(const OSDState &state, const int windowWidth, const int windowHeight) {
     if (!state.allVisible) {
         return;
     }
@@ -50,7 +50,7 @@ void OSDRenderer::handleInput(GLFWwindow *window, OSDState &state) {
         {GLFW_KEY_K, "K"}
     }};
     std::array<bool, 5> keyStates{};
-    std::array<bool*, 5> previousStates = {
+    const std::array<bool*, 5> previousStates = {
         &_oKeyPressed, &_iKeyPressed, &_sKeyPressed, &_cKeyPressed, &_kKeyPressed
     };
 
@@ -87,13 +87,13 @@ void OSDRenderer::handleInput(GLFWwindow *window, OSDState &state) {
 }
 
 void OSDRenderer::renderPlaybackInfo(const OSDState &state, int windowWidth) {
-    const float windowHeight = 100.0f;
+    constexpr float windowHeight = 100.0f;
     ImGui::SetNextWindowPos(ImVec2(20.0f, 20.0f));
 
     // 파일명 길이에 따라 최소 너비 계산
     float minWidth = 200.0f;
     if (!state.fileName.empty()) {
-        ImVec2 textSize = ImGui::CalcTextSize(state.fileName.c_str());
+        const ImVec2 textSize = ImGui::CalcTextSize(state.fileName.c_str());
         minWidth = std::max(minWidth, textSize.x + 70.0f);
     }
 
@@ -116,8 +116,8 @@ void OSDRenderer::renderPlaybackInfo(const OSDState &state, int windowWidth) {
         ImGui::Text("[FILE] %s", state.fileName.c_str());
     }
 
-    std::string currentTimeStr = OSDState::formatTime(state.currentTime);
-    std::string totalTimeStr = OSDState::formatTime(state.totalDuration);
+    const std::string currentTimeStr = OSDState::formatTime(state.currentTime);
+    const std::string totalTimeStr = OSDState::formatTime(state.totalDuration);
     ImGui::Text("[TIME] %s / %s", currentTimeStr.c_str(), totalTimeStr.c_str());
 
     ImGui::Text("[SPEED] %.1fx", state.playbackSpeed);
@@ -127,14 +127,14 @@ void OSDRenderer::renderPlaybackInfo(const OSDState &state, int windowWidth) {
 }
 
 void OSDRenderer::renderSyncInfo(const OSDState &state, int windowWidth, int windowHeight) {
-    const float windowPadding = 20.0f;
-    const float sensorWindowHeight = 140.0f;
-    const float windowWidthPx = 250.0f;
-    const float windowHeightPx = 70.0f;
-    const float startY = windowPadding + sensorWindowHeight + 20.0f;
+    constexpr float windowPadding = 20.0f;
+    constexpr float sensorWindowHeight = 140.0f;
+    constexpr float windowWidthPx = 250.0f;
+    constexpr float windowHeightPx = 70.0f;
+    constexpr float startY = windowPadding + sensorWindowHeight + 20.0f;
 
     ImGui::SetNextWindowPos(ImVec2(
-            (float)windowWidth - windowWidthPx - windowPadding,
+            static_cast<float>(windowWidth) - windowWidthPx - windowPadding,
             startY));
 
     ImGui::SetNextWindowSize(ImVec2(windowWidthPx, windowHeightPx));
@@ -163,9 +163,9 @@ void OSDRenderer::renderSyncInfo(const OSDState &state, int windowWidth, int win
 }
 
 void OSDRenderer::renderCodecInfo(const OSDState &state, int windowWidth, int windowHeight) {
-    const float codecWindowWidth = 200.0f;
-    const float codecWindowHeight = 170.0f;
-    const float startY = 140.0f;
+    constexpr float codecWindowWidth = 200.0f;
+    constexpr float codecWindowHeight = 170.0f;
+    constexpr float startY = 140.0f;
     
     ImGui::SetNextWindowPos(ImVec2(20.0f, startY));
     ImGui::SetNextWindowSize(ImVec2(codecWindowWidth, codecWindowHeight));
@@ -222,22 +222,22 @@ void OSDRenderer::renderCodecInfo(const OSDState &state, int windowWidth, int wi
     ImGui::End();
 }
 
-void OSDRenderer::renderCenterStatus(const OSDState &state, int windowWidth, int windowHeight) {
+void OSDRenderer::renderCenterStatus(const OSDState &state, const int windowWidth, const int windowHeight) {
     if (_lastPlayingState != state.isPlaying) {
         _lastStateChange = std::chrono::steady_clock::now();
         _lastPlayingState = state.isPlaying;
     }
 
-    auto timeSinceChange = std::chrono::duration_cast<std::chrono::milliseconds>(
+    const auto timeSinceChange = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - _lastStateChange).count();
 
     if (timeSinceChange < 1500) {
-        float centerAlpha = std::max(0.0f, 1.0f - ((float) timeSinceChange / 1500.0f));
+        const float centerAlpha = std::max(0.0f, 1.0f - (static_cast<float>(timeSinceChange) / 1500.0f));
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.8f * centerAlpha));
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, centerAlpha));
 
-        ImGui::SetNextWindowPos(ImVec2((float) windowWidth / 2 - 50, (float) windowHeight / 2 - 30));
+        ImGui::SetNextWindowPos(ImVec2(static_cast<float>(windowWidth) / 2 - 50, static_cast<float>(windowHeight) / 2 - 30));
         ImGui::Begin("##CenterStatus", nullptr,
                      ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                      ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
@@ -254,7 +254,7 @@ void OSDRenderer::renderCenterStatus(const OSDState &state, int windowWidth, int
     }
 }
 
-void OSDRenderer::setupOSDStyle(float alpha) {
+void OSDRenderer::setupOSDStyle(const float alpha) {
     // OSD
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12, 8));
@@ -266,13 +266,13 @@ void OSDRenderer::setupOSDStyle(float alpha) {
     ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.3f, 0.3f, 0.3f, 0.5f * alpha));
 }
 
-void OSDRenderer::renderSensorInfo(const OSDState &state, int windowWidth, int windowHeight) {
-    const float sensorWindowWidth = 250.0f;
-    const float sensorWindowHeight = 145.0f;
-    const float startY = 20.0f;
+void OSDRenderer::renderSensorInfo(const OSDState &state, const int windowWidth, int windowHeight) {
+    constexpr float sensorWindowWidth = 250.0f;
+    constexpr float sensorWindowHeight = 145.0f;
+    constexpr float startY = 20.0f;
 
     ImGui::SetNextWindowPos(ImVec2(
-            (float)windowWidth - sensorWindowWidth - 20.0f,
+            static_cast<float>(windowWidth) - sensorWindowWidth - 20.0f,
             startY
     ));
     ImGui::SetNextWindowSize(ImVec2(sensorWindowWidth, sensorWindowHeight));
@@ -295,7 +295,7 @@ void OSDRenderer::renderSensorInfo(const OSDState &state, int windowWidth, int w
         ImGui::Text("[SOURCE] %s", state.sensorReadings.source.c_str());
     }
 
-    std::string updated = state.sensorReadings.getFormattedTimeSinceUpdate();
+    const std::string updated = state.sensorReadings.getFormattedTimeSinceUpdate();
     if (!updated.empty()) {
         ImGui::Text("[UPDATED] %s", updated.c_str());
     }
@@ -306,7 +306,7 @@ void OSDRenderer::renderSensorInfo(const OSDState &state, int windowWidth, int w
 
     ImGui::Text("[ACCEL] %.2f g", state.sensorReadings.acceleration);
 
-    float accelBar = std::min(1.0f, (float)state.sensorReadings.acceleration / 2.0f);
+    const float accelBar = std::min(1.0f, static_cast<float>(state.sensorReadings.acceleration) / 2.0f);
     ImGui::ProgressBar(accelBar, ImVec2(-1, 20), "");
 
     ImGui::End();
