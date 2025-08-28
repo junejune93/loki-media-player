@@ -8,7 +8,14 @@ RUN apt-get update && apt-get install -y \
     x11-apps \
     mesa-utils \
     libgl1-mesa-glx \
+    nvidia-cuda-toolkit \
     && rm -rf /var/lib/apt/lists/*
+
+# CUDA
+ENV CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=${CUDA_HOME}/bin:${PATH}
+ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
 
 WORKDIR /app
 
@@ -22,7 +29,7 @@ RUN if [ ! -d "3rdparty/imgui" ]; then \
     fi
 
 RUN mkdir -p build && cd build && \
-    cmake .. && \
+    cmake -DENABLE_CUDA=ON .. && \
     make -j$(nproc)
 
 RUN mkdir -p /app/media /app/logs
