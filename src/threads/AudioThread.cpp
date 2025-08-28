@@ -28,7 +28,7 @@ void AudioThread::stop() {
     }
 }
 
-void AudioThread::requestSeek(double time) {
+void AudioThread::requestSeek(const double time) {
     _seekTarget = time;
     _seekRequested = true;
 }

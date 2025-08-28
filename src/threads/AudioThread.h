@@ -25,7 +25,7 @@ public:
 
     void stop();
 
-    void setPlaying(bool playing) { _playing = playing; }
+    void setPlaying(const bool playing) { _playing = playing; }
 
     void requestSeek(double time);
 
