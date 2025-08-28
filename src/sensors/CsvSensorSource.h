@@ -3,7 +3,7 @@
 #include "sensors/interface/ISensorSource.h"
 #include <fstream>
 
-class CsvSensorSource : public ISensorSource {
+class CsvSensorSource final : public ISensorSource {
 public:
     explicit CsvSensorSource(std::string filename);
 

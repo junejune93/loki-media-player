@@ -9,8 +9,7 @@ CsvSensorSource::CsvSensorSource(std::string filename)
     loadSensorData();
 }
 
-CsvSensorSource::~CsvSensorSource() {
-    stop();
+CsvSensorSource::~CsvSensorSource() { CsvSensorSource::stop();
 }
 
 void CsvSensorSource::start() {
@@ -104,11 +103,11 @@ void CsvSensorSource::run() {
     }
 
     auto lastUpdate = std::chrono::steady_clock::now();
-    size_t dataSize = _sensorData.size();
+    const size_t dataSize = _sensorData.size();
 
     while (_running) {
         auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - _startTime).count();
+        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - _startTime).count();
 
         // 경과 시간 기반의 현재 데이터 인덱스 계산 (초당 1개의 데이터 인덱스)
         size_t currentIndex = (elapsed / 1000) % dataSize;
