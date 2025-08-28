@@ -28,7 +28,7 @@ void ControlPanel::render(MediaState &state) {
     ImGui::End();
 }
 
-bool ControlPanel::handleKeyInput(int key, int action, const MediaState &state) {
+bool ControlPanel::handleKeyInput(const int key, const int action, const MediaState &state) {
     if (key == GLFW_KEY_SPACE) {
         if (action == GLFW_PRESS && !_spacePressed) {
             _spacePressed = true;
@@ -53,7 +53,7 @@ bool ControlPanel::handleKeyInput(int key, int action, const MediaState &state) 
 void ControlPanel::handleInput(GLFWwindow* window, const MediaState& state) {
     // key - space bar
     static bool spaceKeyWasPressed = false;
-    bool spaceKeyIsPressed = (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS);
+    const bool spaceKeyIsPressed = (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS);
 
     if (spaceKeyIsPressed && !spaceKeyWasPressed) {
         handleKeyInput(GLFW_KEY_SPACE, GLFW_PRESS, state);
@@ -64,7 +64,7 @@ void ControlPanel::handleInput(GLFWwindow* window, const MediaState& state) {
 
     // key - m
     static bool mKeyWasPressed = false;
-    bool mKeyIsPressed = (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS);
+    const bool mKeyIsPressed = (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS);
 
     if (mKeyIsPressed && !mKeyWasPressed) {
         _showMarkers = !_showMarkers;
@@ -72,9 +72,9 @@ void ControlPanel::handleInput(GLFWwindow* window, const MediaState& state) {
     mKeyWasPressed = mKeyIsPressed;
 }
 
-void ControlPanel::renderProgressBar(MediaState &state) {
+void ControlPanel::renderProgressBar(const MediaState &state) {
     ImGui::SetCursorPosY(8);
-    auto progress = static_cast<float>(state.getProgress());
+    const auto progress = static_cast<float>(state.getProgress());
     float progressValue = progress;
 
     const float progressBarWidth = static_cast<float>(_videoWidth) - 24;
@@ -86,7 +86,7 @@ void ControlPanel::renderProgressBar(MediaState &state) {
 
     if (ImGui::SliderFloat("##progress", &progressValue, 0.0f, 1.0f, "")) {
         if (ImGui::IsItemActive()) {
-            double seekTime = progressValue * state.totalDuration;
+            const double seekTime = progressValue * state.totalDuration;
             if (_onSeek) {
                 _onSeek(seekTime);
             }
@@ -101,23 +101,23 @@ void ControlPanel::renderProgressBar(MediaState &state) {
 
     // markers - On/Off
     if (_showMarkers) {
-        const ImU32 iFrameColor = IM_COL32(255, 165, 0, 255 /* Orange */);
-        const ImU32 pFrameColor = IM_COL32(50, 205, 50, 180 /* Lime Green */);
+        constexpr ImU32 iFrameColor = IM_COL32(255, 165, 0, 255 /* Orange */);
+        constexpr ImU32 pFrameColor = IM_COL32(50, 205, 50, 180 /* Lime Green */);
 
-        ImVec2 mousePos = ImGui::GetIO().MousePos;
+        const ImVec2 mousePos = ImGui::GetIO().MousePos;
         bool showTooltip = false;
         double tooltipTimestamp = 0.0;
 
         // markers - I-Frame
         for (const auto &timestamp: state.getIFrameTimestamps()) {
             if (timestamp <= state.totalDuration && state.totalDuration > 0) {
-                float pos = static_cast<float>(timestamp / state.totalDuration) * progressBarWidth;
-                ImVec2 markerPos = ImVec2(progressBarPos.x + pos, progressBarPos.y);
+                const float pos = static_cast<float>(timestamp / state.totalDuration) * progressBarWidth;
+                auto markerPos = ImVec2(progressBarPos.x + pos, progressBarPos.y);
 
                 // check - mouse hover
-                ImVec2 markerRect1(markerPos.x - 3.0f, markerPos.y);
-                ImVec2 markerRect2(markerPos.x + 3.0f, markerPos.y + progressBarHeight);
-                bool isHovering = (mousePos.x >= markerRect1.x && mousePos.x <= markerRect2.x &&
+                const ImVec2 markerRect1(markerPos.x - 3.0f, markerPos.y);
+                const ImVec2 markerRect2(markerPos.x + 3.0f, markerPos.y + progressBarHeight);
+                const bool isHovering = (mousePos.x >= markerRect1.x && mousePos.x <= markerRect2.x &&
                                    mousePos.y >= markerRect1.y && mousePos.y <= markerRect2.y);
 
                 // effect - mouse hover
@@ -138,7 +138,7 @@ void ControlPanel::renderProgressBar(MediaState &state) {
         // markers - P-Frame
         for (const auto &timestamp: state.getPFrameTimestamps()) {
             if (timestamp <= state.totalDuration && state.totalDuration > 0) {
-                float pos = static_cast<float>(timestamp / state.totalDuration) * progressBarWidth;
+                const float pos = static_cast<float>(timestamp / state.totalDuration) * progressBarWidth;
                 drawList->AddLine(ImVec2(progressBarPos.x + pos, progressBarPos.y + progressBarHeight * 0.3f),
                                   ImVec2(progressBarPos.x + pos, progressBarPos.y + progressBarHeight * 0.7f),
                                   pFrameColor, 1.5f);
@@ -155,9 +155,9 @@ void ControlPanel::renderProgressBar(MediaState &state) {
                                  ImGuiWindowFlags_NoFocusOnAppearing);
 
             // timestamp format(HH:MM:SS.mmm)
-            int hours = static_cast<int>(tooltipTimestamp / 3600);
-            int minutes = static_cast<int>((tooltipTimestamp - hours * 3600) / 60);
-            double seconds = tooltipTimestamp - hours * 3600 - minutes * 60;
+            const int hours = static_cast<int>(tooltipTimestamp / 3600);
+            const int minutes = static_cast<int>((tooltipTimestamp - hours * 3600) / 60);
+            const double seconds = tooltipTimestamp - hours * 3600 - minutes * 60;
 
             ImGui::Text("I-Frame: %02d:%02d:%06.3f", hours, minutes, seconds);
             ImGui::End();
@@ -169,19 +169,19 @@ void ControlPanel::renderProgressBar(MediaState &state) {
 
 void ControlPanel::renderTimeDisplay(const MediaState &state) {
     ImGui::SameLine();
-    std::string timeText = Utils::formatTime(state.currentTime) + " / " + Utils::formatTime(state.totalDuration);
+    const std::string timeText = Utils::formatTime(state.currentTime) + " / " + Utils::formatTime(state.totalDuration);
     ImGui::TextUnformatted(timeText.c_str());
 }
 
 void ControlPanel::renderControlButtons(const MediaState &state) {
     ImGui::SetCursorPosY(35);
 
-    const float buttonWidth = 60.0f;
-    const float buttonHeight = 35.0f;
-    const float spacing = 15.0f;
-    const int numButtons = 5;
-    float totalWidth = buttonWidth * numButtons + spacing * (numButtons - 1);
-    float startX = (static_cast<float>(_videoWidth) - totalWidth) * 0.5f;
+    constexpr float buttonWidth = 60.0f;
+    constexpr float buttonHeight = 35.0f;
+    constexpr float spacing = 15.0f;
+    constexpr int numButtons = 5;
+    constexpr float totalWidth = buttonWidth * numButtons + spacing * (numButtons - 1);
+    const float startX = (static_cast<float>(_videoWidth) - totalWidth) * 0.5f;
 
     ImGui::SetCursorPosX(startX);
 
@@ -208,7 +208,7 @@ void ControlPanel::renderControlButtons(const MediaState &state) {
 
     ImGui::SameLine(0, spacing);
     if (ImGui::Button("<<10s", ImVec2(buttonWidth, buttonHeight))) {
-        double seekTime = std::max(0.0, state.currentTime - 10.0);
+        const double seekTime = std::max(0.0, state.currentTime - 10.0);
         if (_onSeek) {
             _onSeek(seekTime);
         }
@@ -216,7 +216,7 @@ void ControlPanel::renderControlButtons(const MediaState &state) {
 
     ImGui::SameLine(0, spacing);
     if (ImGui::Button("10s>>", ImVec2(buttonWidth, buttonHeight))) {
-        double seekTime = std::min(state.totalDuration, state.currentTime + 10.0);
+        const double seekTime = std::min(state.totalDuration, state.currentTime + 10.0);
         if (_onSeek) {
             _onSeek(seekTime);
         }

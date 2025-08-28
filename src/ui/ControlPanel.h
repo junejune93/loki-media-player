@@ -20,20 +20,20 @@ public:
 
     void setSeekCallback(std::function<void(double)> cb) { _onSeek = std::move(cb); }
 
-    void setWindowSize(int width, int height) {
+    void setWindowSize(const int width, const int height) {
         _videoWidth = width;
         _controlsHeight = height - (width * 720 / 1280);
     }
 
     void setStartRecordingCallback(std::function<bool()> cb) { _onStartRecording = std::move(cb); }
     void setStopRecordingCallback(std::function<void()> cb) { _onStopRecording = std::move(cb); }
-    void setRecordingState(bool isRecording) { _isRecording = isRecording; }
+    void setRecordingState(const bool isRecording) { _isRecording = isRecording; }
 
     bool handleKeyInput(int key, int action, const MediaState &state);
     void handleInput(GLFWwindow *window, const MediaState &state);
 
 private:
-    void renderProgressBar(MediaState &state);
+    void renderProgressBar(const MediaState &state);
 
     void renderControlButtons(const MediaState &state);
 
