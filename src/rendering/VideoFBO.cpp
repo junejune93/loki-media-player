@@ -12,7 +12,7 @@ VideoFBO::~VideoFBO() {
     }
 }
 
-void VideoFBO::create(int w, int h) {
+void VideoFBO::create(const int w, const int h) {
     _width = w;
     _height = h;
 
@@ -53,7 +53,7 @@ void VideoFBO::updateTexture(const uint8_t *frameData) const {
 
 std::vector<uint8_t> VideoFBO::readPixels(bool flip) const {
     // RGBA
-    const int bytesPerPixel = 4;
+    constexpr int bytesPerPixel = 4;
     const int rowSize = _width * bytesPerPixel;
     std::vector<uint8_t> pixels(_width * _height * bytesPerPixel);
 
