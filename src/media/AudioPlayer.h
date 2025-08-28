@@ -1,31 +1,23 @@
 #pragma once
 
-#include <portaudio.h>
-#include <vector>
+#include <algorithm>
 #include <cstdint>
-#include <stdexcept>
 #include <deque>
 #include <mutex>
-#include <algorithm>
+#include <portaudio.h>
+#include <stdexcept>
+#include <vector>
 #include "AudioFrame.h"
 
 class AudioPlayer {
 public:
-    AudioPlayer(int sampleRate, int channels)
-            : _sampleRate(sampleRate),
-              _channels(channels) {
+    AudioPlayer(const int sampleRate, const int channels) : _sampleRate(sampleRate), _channels(channels) {
         if (Pa_Initialize() != paNoError) {
             throw std::runtime_error("Pa_Initialize failed");
         }
 
-        PaError err = Pa_OpenDefaultStream(&_stream,
-                                           0,
-                                           channels,
-                                           paInt16,
-                                           sampleRate,
-                                           1024,
-                                           &AudioPlayer::audioCallback,
-                                           this);
+        const PaError err = Pa_OpenDefaultStream(&_stream, 0, channels, paInt16, sampleRate, 1024,
+                                                 &AudioPlayer::audioCallback, this);
         if (err != paNoError) {
             throw std::runtime_error("Pa_OpenDefaultStream failed");
         }
@@ -66,30 +58,27 @@ public:
         return pts;
     }
 
-    void pause() noexcept {
+    void pause() const noexcept {
         if (_stream) {
             Pa_StopStream(_stream);
         }
     }
 
-    void resume() noexcept {
+    void resume() const noexcept {
         if (_stream) {
             Pa_StartStream(_stream);
         }
     }
 
 private:
-    static int audioCallback(const void * /*inputBuffer*/,
-                             void *outputBuffer,
-                             unsigned long framesPerBuffer,
-                             const PaStreamCallbackTimeInfo * /*timeInfo*/,
-                             PaStreamCallbackFlags /*statusFlags*/,
+    static int audioCallback(const void * /*inputBuffer*/, void *outputBuffer, const unsigned long framesPerBuffer,
+                             const PaStreamCallbackTimeInfo * /*timeInfo*/, PaStreamCallbackFlags /*statusFlags*/,
                              void *userData) noexcept {
         auto *player = static_cast<AudioPlayer *>(userData);
         return player->processAudio(outputBuffer, framesPerBuffer);
     }
 
-    int processAudio(void *outputBuffer, unsigned long framesPerBuffer) noexcept {
+    int processAudio(void *outputBuffer, const unsigned long framesPerBuffer) noexcept {
         auto *out = static_cast<int16_t *>(outputBuffer);
         const size_t samplesNeeded = framesPerBuffer * _channels;
         size_t samplesWritten = 0;
