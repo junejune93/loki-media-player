@@ -29,6 +29,8 @@ MediaPlayer::~MediaPlayer() {
     }
 
     if (_source) {
+        _source->getVideoQueue().clear();
+        _source->getAudioQueue().clear();
         _source.reset();
     }
 }

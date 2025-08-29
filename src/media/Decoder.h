@@ -42,7 +42,7 @@ struct SeekRequest {
 
     std::pair<bool, double> get() const {
         if (bool req = requested.load()) {
-            return {true, target.load()};
+            return {req, target.load()};
         }
         return {false, 0.0};
     }

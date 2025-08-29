@@ -85,6 +85,7 @@ public:
     void clear() {
         std::lock_guard<std::mutex> lock(_mutex);
         _queue.clear();
+        _cond.notify_all();
     }
 
 private:
